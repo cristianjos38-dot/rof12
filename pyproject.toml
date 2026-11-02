@@ -11,8 +11,11 @@ dependencies = [
   "alembic>=1.13,<2",
   "fastapi>=0.110,<1",
   "PyJWT>=2.8,<3",
+  "Pillow>=10,<12",
   "pydantic>=2.5,<3",
+  "pypdf>=4,<7",
   "psycopg[binary]>=3.1,<4",
+  "reportlab>=4,<5",
   "sqlalchemy>=2.0,<3",
   "uvicorn[standard]>=0.27,<1",
 ]

@@ -21,6 +21,20 @@ services:
       - rof12_documents:/var/lib/rof12/documents
     depends_on:
       - postgres
+  perception-worker:
+    build: .
+    command: ["python", "-m", "app.perception.worker"]
+    network_mode: "none"
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    tmpfs:
+      - "/tmp"
+    user: "10001:10001"
+    environment:
+      MODEL_MODE: mock
 
 volumes:
   rof12_documents:

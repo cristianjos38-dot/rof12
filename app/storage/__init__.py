@@ -1,0 +1,2 @@
+"""Tenant-isolated artifact storage."""
+
