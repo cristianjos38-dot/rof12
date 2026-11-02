@@ -1,4 +1,4 @@
-.PHONY: install test run lint
+.PHONY: install test run lint db-up db-down migrate
 
 install:
 	python3 -m pip install -e '.[dev]'
@@ -8,6 +8,15 @@ test:
 
 run:
 	MODEL_MODE=mock uvicorn app.main:app --reload
+
+db-up:
+	docker compose up -d postgres
+
+db-down:
+	docker compose down
+
+migrate:
+	alembic upgrade head
 
 lint:
 	python3 -m compileall -q app tests scripts

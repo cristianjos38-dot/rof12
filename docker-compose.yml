@@ -1,8 +1,21 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_dev_only
+      POSTGRES_DB: rof12
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
   rof12:
     build: .
     environment:
       MODEL_MODE: mock
+      DATABASE_URL: postgresql+psycopg://rof12_app:rof12_app_dev@postgres:5432/rof12
     ports:
       - "8000:8000"
+    depends_on:
+      - postgres
 
