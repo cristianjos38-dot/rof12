@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.api.routes.holds import hold_manager
 from app.security.hold_manager import Hold
@@ -34,8 +34,8 @@ def test_ui_partial_escapes_untrusted_artifact_text(client):
 
 def test_ui_holds_are_tenant_filtered(client):
     hold_manager.holds.clear()
-    hold_manager.open(Hold("ui-own", "tenant_001", "user_001", datetime.now(timezone.utc) + timedelta(minutes=5)))
-    hold_manager.open(Hold("ui-other", "tenant_002", "user_002", datetime.now(timezone.utc) + timedelta(minutes=5)))
+    hold_manager.open(Hold("ui-own", "tenant_001", "user_001", datetime.now(UTC) + timedelta(minutes=5)))
+    hold_manager.open(Hold("ui-other", "tenant_002", "user_002", datetime.now(UTC) + timedelta(minutes=5)))
     response = client.get("/ui/partials/holds")
     assert "ui-own" in response.text
     assert "ui-other" not in response.text

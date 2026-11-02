@@ -1,6 +1,7 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
-from uuid import uuid4
 
 from app.api.dependencies import AuthContext, get_auth_context
 from app.api.state import api_state

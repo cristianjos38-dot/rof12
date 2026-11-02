@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Generic, List, Mapping, TypeVar
+from typing import Any, Generic, TypeVar
 
 
 class TrustLevel(str, Enum):
@@ -23,17 +25,17 @@ class TaintedValue(Generic[T]):
     trust_level: TrustLevel = TrustLevel.UNTRUSTED
 
     @classmethod
-    def external(cls, value: T, source_id: str) -> "TaintedValue[T]":
+    def external(cls, value: T, source_id: str) -> TaintedValue[T]:
         return cls(value=value, source_id=source_id, is_tainted=True, trust_level=TrustLevel.UNTRUSTED)
 
     @classmethod
-    def trusted(cls, value: T, source_id: str = "internal") -> "TaintedValue[T]":
+    def trusted(cls, value: T, source_id: str = "internal") -> TaintedValue[T]:
         return cls(value=value, source_id=source_id, is_tainted=False, trust_level=TrustLevel.FULLY_RECONCILED)
 
-    def transform(self, fn, operation: str = "transform") -> "TaintedValue":
+    def transform(self, fn, operation: str = "transform") -> TaintedValue:
         return TaintedValue(
             value=fn(self.value),
-            source_id="%s:%s" % (self.source_id, operation),
+            source_id=f"{self.source_id}:{operation}",
             is_tainted=self.is_tainted,
             trust_level=self.trust_level,
         )
@@ -41,7 +43,7 @@ class TaintedValue(Generic[T]):
     def __add__(self, other):
         if isinstance(other, TaintedValue):
             value, tainted = self.value + other.value, self.is_tainted or other.is_tainted
-            source = "%s+%s" % (self.source_id, other.source_id)
+            source = f"{self.source_id}+{other.source_id}"
         else:
             value, tainted, source = self.value + other, self.is_tainted, self.source_id
         return TaintedValue(value, source, tainted, TrustLevel.UNTRUSTED if tainted else TrustLevel.FULLY_RECONCILED)
@@ -59,7 +61,7 @@ class SourceRecord:
 
 class SourceRegistry:
     def __init__(self):
-        self._records: Dict[str, SourceRecord] = {}
+        self._records: dict[str, SourceRecord] = {}
 
     def register_external(self, source_id: str, source_type: str, fragment_hash: str) -> SourceRecord:
         record = SourceRecord(source_id, source_type, fragment_hash)
@@ -71,9 +73,9 @@ class SourceRegistry:
 
 
 class ProvenanceTracker:
-    def __init__(self, registry: SourceRegistry = None):
+    def __init__(self, registry: SourceRegistry | None = None):
         self.registry = registry or SourceRegistry()
-        self._events: List[Dict[str, Any]] = []
+        self._events: list[dict[str, Any]] = []
 
     def extract(self, value: T, source_id: str, source_type: str = "external", fragment_hash: str = "") -> TaintedValue[T]:
         self.registry.register_external(source_id, source_type, fragment_hash)
@@ -84,7 +86,7 @@ class ProvenanceTracker:
     def reconcile(self, candidate: TaintedValue[T], internal_value: T) -> TaintedValue[T]:
         if candidate.value != internal_value:
             raise ReconciliationError("deterministic reconciliation mismatch")
-        return TaintedValue.trusted(internal_value, source_id="reconciled:%s" % candidate.source_id)
+        return TaintedValue.trusted(internal_value, source_id=f"reconciled:{candidate.source_id}")
 
     @property
     def events(self) -> tuple:

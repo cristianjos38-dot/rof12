@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from fastapi import Depends, Header, HTTPException, Request, status
+from fastapi import Depends, Header, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.api.authentication import AuthenticationError, decode_access_token
@@ -23,10 +23,10 @@ def get_security_context(
         raise HTTPException(403, detail="CSRF validation failed")
     try:
         claims = decode_access_token(credentials.credentials if credentials else "")
-        issued = datetime.fromtimestamp(int(claims["iat"]), timezone.utc)
+        issued = datetime.fromtimestamp(int(claims["iat"]), UTC)
     except (AuthenticationError, KeyError, TypeError, ValueError, OSError) as exc:
         raise HTTPException(401, detail="recent authentication required") from exc
-    if (datetime.now(timezone.utc) - issued).total_seconds() > 300:
+    if (datetime.now(UTC) - issued).total_seconds() > 300:
         raise HTTPException(401, detail="recent authentication required")
     return context
 

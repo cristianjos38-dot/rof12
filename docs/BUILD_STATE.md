@@ -1,6 +1,6 @@
 # ROF12 build state
 
-CURRENT_PHASE: 13
+CURRENT_PHASE: 15
 
 ## Bootstrap status
 
@@ -18,8 +18,10 @@ CURRENT_PHASE: 13
 - Fase 11: internal non-serializable execution permits, immutable tool registry, transactional refund execution and outbox events.
 - Fase 12: Meta multi-mode router, preventive budget guard, read-only orchestrator, prompt delimiters, SAM parser and adversarial mock mode.
 - Fase 13: protected FastAPI v1 routes, request IDs, sanitized structured logging, uniform JSON errors and security administration endpoints.
+- Fase 14: server-rendered control panel with local HTMX, strict Jinja autoescape, tenant-scoped service-backed views and browser security headers.
+- Fase 15: adversarial security laboratory, threat-ID coverage, atomicity stress harness and resilience checks.
 
-Fase 6–8 validation evidence: `37 passed`; Fase 9–11 adds deterministic policy, hold, audit and gate suites; Fase 12 raises the full local suite to `53 passed`. All tests run without LLM calls; adversarial mode is intentionally synthetic.
+Fase 15 validation evidence: adversarial suite `13 passed`; full suite `79 passed, 1 skipped`; Ruff and Pyright report zero errors; `pip-audit .` reports no known vulnerabilities under Python 3.11. The skipped resilience check requires a live PostgreSQL Docker environment.
 
-All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap.
+All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap. The supported runtime is Python 3.11+.
 

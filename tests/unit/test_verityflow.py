@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.api.dependencies import AuthContext
@@ -6,8 +6,7 @@ from app.domain.contracts import ToolRequest
 from app.security.capability_manager import CapabilityRecord, CapabilityStatus
 from app.verification.verityflow import VerityReason, evaluate_snapshot
 
-
-NOW = datetime.now(timezone.utc)
+NOW = datetime.now(UTC)
 CTX = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")
 
 
@@ -47,9 +46,8 @@ def test_verityflow_rejects_precision_and_nan():
         class InvalidRequest:
             order_id = "order_1042"
             operation_id = "op-1"
-            pass
         invalid_request = InvalidRequest()
-        invalid_request.amount = Decimal(amount)
+        invalid_request.amount = Decimal(amount)  # pyright: ignore[reportAttributeAccessIssue]
         result = evaluate_snapshot(order, invalid_request, CTX, capability(), False, NOW)
         assert VerityReason.INVALID_AMOUNT in result.reasons
 

@@ -2,14 +2,14 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from app.api.dependencies import AuthContext, RLS_SET_LOCAL_SQL
+from app.api.dependencies import RLS_SET_LOCAL_SQL, AuthContext
 
 
 def test_auth_context_is_frozen_and_contains_server_resolved_fields():
     context = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")
     assert context.token_sub == context.user_id
     with pytest.raises(FrozenInstanceError):
-        context.tenant_id = "tenant_002"
+        context.tenant_id = "tenant_002"  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_rls_context_is_transaction_local_and_parameterized():

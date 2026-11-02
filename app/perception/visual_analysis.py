@@ -1,20 +1,18 @@
 from io import BytesIO
-from typing import List
 
 import pypdfium2 as pdfium
-from PIL import Image
 
-from app.perception.ocr_engine import OcrEngine, OcrRegion
+from app.perception.ocr_engine import OcrEngine
 
 
-def render_pdf_pages(content: bytes, dpi: int = 160) -> List[bytes]:
+def render_pdf_pages(content: bytes, dpi: int = 160) -> list[bytes]:
     if dpi < 150 or dpi > 200:
         raise ValueError("render DPI must be between 150 and 200")
     document = pdfium.PdfDocument(content)
     images = []
     scale = dpi / 72.0
     for index in range(len(document)):
-        bitmap = document[index].render(scale=scale)
+        bitmap = document[index].render(scale=scale)  # type: ignore[arg-type]
         image = bitmap.to_pil()
         output = BytesIO()
         image.save(output, format="PNG", optimize=False)

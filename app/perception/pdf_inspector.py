@@ -1,6 +1,5 @@
-from dataclasses import dataclass
 import re
-from typing import List, Tuple
+from dataclasses import dataclass
 
 from pypdf import PdfReader
 
@@ -9,21 +8,21 @@ from pypdf import PdfReader
 class TextRegion:
     page: int
     text: str
-    box: Tuple[float, float, float, float]
+    box: tuple[float, float, float, float]
     font_size: float
 
 
 @dataclass(frozen=True)
 class PdfInspection:
     pages: int
-    regions: Tuple[TextRegion, ...]
+    regions: tuple[TextRegion, ...]
     embedded_text: str
-    signals: Tuple[str, ...]
+    signals: tuple[str, ...]
 
 
 def inspect_pdf(content: bytes) -> PdfInspection:
     reader = PdfReader(__import__("io").BytesIO(content), strict=False)
-    regions: List[TextRegion] = []
+    regions: list[TextRegion] = []
     signals = []
     for page_number, page in enumerate(reader.pages, start=1):
         page_text = page.extract_text() or ""

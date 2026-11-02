@@ -9,10 +9,10 @@ def test_task_artifact_and_audit_flow(client):
     artifact = client.post("/v1/artifacts", json={"filename": "invoice.pdf", "media_type": "application/pdf", "content_base64": base64.b64encode(b"%PDF-local").decode()})
     assert artifact.status_code == 201
     artifact_id = artifact.json()["artifact_id"]
-    linked = client.post("/v1/tasks/%s/artifacts" % task_id, json={"artifact_id": artifact_id})
+    linked = client.post(f"/v1/tasks/{task_id}/artifacts", json={"artifact_id": artifact_id})
     assert linked.status_code == 200
     assert artifact_id in linked.json()["artifacts"]
-    assert client.get("/v1/tasks/%s/audit" % task_id).status_code == 200
+    assert client.get(f"/v1/tasks/{task_id}/audit").status_code == 200
 
 
 def test_task_body_cannot_supply_tenant(client):

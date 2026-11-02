@@ -1,11 +1,10 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 
 from app.api.dependencies import AuthContext, get_auth_context
-from app.api.state import api_state
-from app.security.hold_manager import Hold, HoldError, HoldManager
+from app.security.hold_manager import HoldError, HoldManager
 
 router = APIRouter(prefix="/v1/holds", tags=["holds"])
 hold_manager = HoldManager()
@@ -32,7 +31,7 @@ def get_hold(hold_id: str, context: AuthContext = Depends(get_auth_context)):
 @router.post("/{hold_id}/resolve")
 def resolve_hold(hold_id: str, payload: HoldResolution, context: AuthContext = Depends(get_auth_context)):
     try:
-        hold = hold_manager.resolve(hold_id, context, datetime.now(timezone.utc), payload.approve, lambda: type("Revalidation", (), {"decision": "ALLOW"})())
+        hold = hold_manager.resolve(hold_id, context, datetime.now(UTC), payload.approve, lambda: type("Revalidation", (), {"decision": "ALLOW"})())
     except HoldError as exc:
         raise HTTPException(409, detail=str(exc)) from exc
     return {"hold_id": hold.hold_id, "status": hold.status}

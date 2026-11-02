@@ -1,6 +1,5 @@
 import os
 
-
 MODEL_MODE = os.getenv("MODEL_MODE", "mock").lower()
 MODEL_API_KEY = os.getenv("MODEL_API_KEY", "")
 MODEL_API_URL = os.getenv("MODEL_API_URL", "https://api.meta.ai/v1/models")

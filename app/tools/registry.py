@@ -1,6 +1,5 @@
 from types import MappingProxyType
 
-
 AUTHORIZED_TOOLS = MappingProxyType({"refund_service": "refund_service"})
 
 

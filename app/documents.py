@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import hashlib
 import os
 import secrets
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -32,7 +33,7 @@ class StoredDocument:
 
 
 class DocumentIngestor:
-    def __init__(self, root: Optional[str] = None, provenance: Optional[ProvenanceTracker] = None):
+    def __init__(self, root: str | None = None, provenance: ProvenanceTracker | None = None):
         self.root = Path(root or DOCUMENT_STORAGE_ROOT).resolve()
         self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
         os.chmod(self.root, 0o700)
@@ -52,7 +53,7 @@ class DocumentIngestor:
         if self.root not in tenant_root.parents:
             raise ValueError("invalid tenant storage boundary")
         tenant_root.mkdir(mode=0o700, exist_ok=True)
-        storage_key = "%s/%s/%s" % (context.tenant_id, document_id, filename)
+        storage_key = f"{context.tenant_id}/{document_id}/{filename}"
         target = (tenant_root / document_id / filename).resolve()
         if tenant_root not in target.parents:
             raise ValueError("invalid storage boundary")
@@ -60,7 +61,7 @@ class DocumentIngestor:
         with target.open("xb") as handle:
             handle.write(upload.content)
         os.chmod(target, 0o600)
-        source_id = "document:%s" % document_id
+        source_id = f"document:{document_id}"
         tainted = self.provenance.extract(upload.content, source_id, "external_document", digest)
         return StoredDocument(context.tenant_id, document_id, storage_key, digest, len(upload.content), tainted)
 

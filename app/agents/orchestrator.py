@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from app.domain.contracts import ToolRequest
 from app.agents.prompts import build_prompt
+from app.domain.contracts import ToolRequest
 
 
 @dataclass(frozen=True)

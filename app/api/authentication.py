@@ -1,4 +1,3 @@
-from typing import Dict
 
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -12,7 +11,7 @@ class AuthenticationError(ValueError):
     pass
 
 
-def decode_access_token(token: str) -> Dict:
+def decode_access_token(token: str) -> dict:
     try:
         claims = jwt.decode(
             token,

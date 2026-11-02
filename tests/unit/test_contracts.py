@@ -8,7 +8,7 @@ from app.domain.contracts import ServerContext, ToolRequest
 
 def test_tool_request_rejects_identity_and_extra_fields():
     with pytest.raises(ValidationError):
-        ToolRequest(order_id="order_1042", amount=Decimal("10.00"), reason="x", operation_id="op-1", tenant_id="tenant_001")
+        ToolRequest(order_id="order_1042", amount=Decimal("10.00"), reason="x", operation_id="op-1", tenant_id="tenant_001")  # pyright: ignore[reportCallIssue]
 
 
 def test_money_is_decimal_and_positive():

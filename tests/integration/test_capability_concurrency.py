@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.security.capability_manager import CapabilityManager
@@ -21,7 +21,7 @@ def test_consume_uses_atomic_active_expiry_update():
     manager = CapabilityManager(connection)
     class Request: amount = Decimal("10.00")
     class Context: tenant_id = "tenant_001"; user_id = "user_001"
-    assert manager.consume("secret", Request(), Context(), datetime.now(timezone.utc)) == "cap-1"
+    assert manager.consume("secret", Request(), Context(), datetime.now(UTC)) == "cap-1"
     sql, params = connection.statements[0]
     assert "UPDATE rof12.capabilities" in sql
     assert "status = 'ACTIVE'" in sql

@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 MIGRATION = ROOT / "migrations" / "versions" / "0001_phase3_persistence_rls.py"
 
@@ -15,7 +14,7 @@ def test_phase3_schema_has_numeric_money_and_composite_foreign_keys():
 def test_phase3_schema_enforces_rls_and_role_boundaries():
     sql = MIGRATION.read_text(encoding="utf-8")
     for table in ("tenants", "orders", "order_balances", "refunds", "audit_events"):
-        assert "ALTER TABLE rof12.%s ENABLE ROW LEVEL SECURITY" % table in sql
+        assert f"ALTER TABLE rof12.{table} ENABLE ROW LEVEL SECURITY" in sql
     assert "current_setting('app.tenant_id', true)" in sql
     assert "REVOKE INSERT, UPDATE, DELETE ON rof12.refunds, rof12.order_balances FROM rof12_app" in sql
     assert "GRANT INSERT ON rof12.refunds TO rof12_executor" in sql

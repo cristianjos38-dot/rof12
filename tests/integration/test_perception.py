@@ -12,6 +12,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "adversarial"
 
 def test_seven_adversarial_fixtures_are_received_and_validated():
     from io import BytesIO
+
     from app.api.dependencies import AuthContext
 
     context = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")

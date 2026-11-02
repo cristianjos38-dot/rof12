@@ -1,11 +1,10 @@
 import hashlib
 import os
+import re
 import shutil
 import uuid
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict
 
 from app.perception.ingestion import ArtifactState, ReceivedArtifact
 
@@ -30,7 +29,7 @@ class ArtifactStore:
         os.chmod(self.root, 0o700)
         self.quarantine = self.root / "quarantine"
         self.quarantine.mkdir(mode=0o700, exist_ok=True)
-        self._states: Dict[tuple, ArtifactState] = {}
+        self._states: dict[tuple, ArtifactState] = {}
 
     @staticmethod
     def _check_tenant(value: str) -> str:
@@ -43,7 +42,7 @@ class ArtifactStore:
         try:
             uuid.UUID(value)
         except (ValueError, AttributeError) as exc:
-            raise ArtifactStorageError("invalid %s" % label) from exc
+            raise ArtifactStorageError(f"invalid {label}") from exc
         return value
 
     def _artifact_dir(self, tenant_id: str, artifact_id: str) -> Path:

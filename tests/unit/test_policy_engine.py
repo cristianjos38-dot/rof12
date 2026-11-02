@@ -3,7 +3,6 @@ from types import SimpleNamespace
 from app.api.dependencies import AuthContext
 from app.security.policy_engine import GateDecision, evaluate
 
-
 CTX = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")
 CAP = SimpleNamespace(valid=True, reasons=())
 VERITY = SimpleNamespace(checks={"V2": True, "V4": True, "V5": True}, approval_required=False)
@@ -14,7 +13,7 @@ RISK = SimpleNamespace(risk_level="LOW")
 def test_policy_allows_only_when_every_dimension_is_positive():
     result = evaluate(CTX, SimpleNamespace(tool_name="refund_service"), CAP, PROVENANCE, RISK, VERITY, SimpleNamespace(active=False))
     assert result.decision is GateDecision.ALLOW
-    assert all(result.dimensions.values())
+    assert all((result.dimensions or {}).values())
 
 
 def test_policy_mutations_are_default_deny_or_quarantine():

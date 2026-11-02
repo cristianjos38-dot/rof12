@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import text
 
@@ -8,7 +10,7 @@ from sqlalchemy import text
 class SystemState:
     active: bool
     reason: str = ""
-    updated_at: datetime = None
+    updated_at: datetime | None = None
 
 
 class KillSwitchError(ValueError):
@@ -27,7 +29,7 @@ class KillSwitch:
     def activate(self, connection, ctx, reason: str) -> SystemState:
         if getattr(ctx, "role", None) not in self.AUTHORIZED_ROLES:
             raise KillSwitchError("role cannot activate kill switch")
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         connection.execute(text("UPDATE rof12.system_state SET kill_switch_active = true, reason = :reason, updated_at = :now WHERE state_id = true"), {"reason": reason, "now": now})
         connection.execute(text("UPDATE rof12.capabilities SET status = 'REVOKED' WHERE status = 'ACTIVE'"))
         return SystemState(True, reason, now)

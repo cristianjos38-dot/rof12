@@ -1,12 +1,17 @@
-.PHONY: install test run lint check db-up db-down migrate seed
+.PHONY: install test run lint check adversarial db-up db-down migrate seed
+
+PYTHON ?= python3.11
 
 install:
-	python3 -m pip install -e '.[dev]'
+	$(PYTHON) -m pip install -e '.[dev]'
 
 test:
-	MODEL_MODE=mock python3 -m pytest
+	MODEL_MODE=mock $(PYTHON) -m pytest
 
 check: lint test
+
+adversarial:
+	MODEL_MODE=mock $(PYTHON) -m pytest tests/adversarial tests/meta -q
 
 run:
 	MODEL_MODE=mock uvicorn app.main:app --reload
@@ -21,8 +26,8 @@ migrate:
 	alembic upgrade head
 
 seed:
-	DATABASE_OWNER_URL=$${DATABASE_OWNER_URL:-postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5432/rof12} python3 scripts/seed.py
+	DATABASE_OWNER_URL=$${DATABASE_OWNER_URL:-postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5432/rof12} $(PYTHON) scripts/seed.py
 
 lint:
-	python3 -m compileall -q app tests scripts
+	$(PYTHON) -m compileall -q app tests scripts
 

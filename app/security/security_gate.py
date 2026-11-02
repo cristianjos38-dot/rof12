@@ -1,15 +1,13 @@
 import secrets
-from dataclasses import dataclass
 
 from app.security.policy_engine import GateDecision, PolicyResult, evaluate
 from app.tools.registry import is_registered
-
 
 _PERMIT_TOKEN = object()
 
 
 class GateExecutionPermit:
-    __slots__ = ("permit_id", "decision", "_internal")
+    __slots__ = ("_internal", "decision", "permit_id")
 
     def __init__(self, permit_id, decision, _internal=None):
         if _internal is not _PERMIT_TOKEN:

@@ -22,7 +22,7 @@ def security_status(context: AuthContext = Depends(get_security_context)):
 def activate_kill_switch(request: Request, context: AuthContext = Depends(get_security_context)):
     with api_state.lock:
         api_state.kill_switch_active = True
-        api_state.kill_reason = "activated by %s from %s" % (context.user_id, request.client.host if request.client else "unknown")
+        api_state.kill_reason = "activated by {} from {}".format(context.user_id, request.client.host if request.client else "unknown")
         for key in list(api_state.audit):
             pass
     return {"kill_switch_active": True, "request_id": request.state.request_id}

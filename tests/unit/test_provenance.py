@@ -1,6 +1,12 @@
 import pytest
 
-from app.provenance import ProvenanceTracker, ReconciliationError, SourceRegistry, TrustLevel, TaintedValue
+from app.provenance import (
+    ProvenanceTracker,
+    ReconciliationError,
+    SourceRegistry,
+    TaintedValue,
+    TrustLevel,
+)
 
 
 def test_external_values_start_tainted_and_untrusted():

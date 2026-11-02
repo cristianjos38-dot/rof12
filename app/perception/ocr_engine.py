@@ -1,5 +1,6 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol, Sequence
+from typing import Protocol
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,7 @@ class PaddleOcrEngine:
         if self._engine is None:
             return ()
         from io import BytesIO
+
         from PIL import Image
 
         regions = []

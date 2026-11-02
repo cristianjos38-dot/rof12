@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.api.routes.holds import hold_manager
 from app.security.hold_manager import Hold
 
 
 def test_hold_query_and_resolution(approver_client):
-    hold_manager.open(Hold("api-hold", "tenant_001", "user_001", datetime.now(timezone.utc) + timedelta(minutes=5)))
+    hold_manager.open(Hold("api-hold", "tenant_001", "user_001", datetime.now(UTC) + timedelta(minutes=5)))
     assert approver_client.get("/v1/holds").status_code == 200
     assert approver_client.get("/v1/holds/api-hold").json()["hold_id"] == "api-hold"
     response = approver_client.post("/v1/holds/api-hold/resolve", json={"approve": False})

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -7,8 +7,7 @@ from app.persistence.audit_logger import AuditLogger, chain_hash
 from app.security.hold_manager import Hold, HoldError, HoldManager, HoldStatus
 from app.security.kill_switch import KillSwitch, KillSwitchError
 
-
-NOW = datetime.now(timezone.utc)
+NOW = datetime.now(UTC)
 
 
 def test_hold_requires_approver_and_revalidates_before_approval():

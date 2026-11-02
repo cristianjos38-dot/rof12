@@ -1,13 +1,18 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from app.api.dependencies import AuthContext
 from app.domain.contracts import ToolRequest
-from app.security.capability_manager import CapabilityRecord, CapabilityStatus, ReasonCode, hash_capability, validate
-
+from app.security.capability_manager import (
+    CapabilityRecord,
+    CapabilityStatus,
+    ReasonCode,
+    hash_capability,
+    validate,
+)
 
 CTX = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")
-NOW = datetime.now(timezone.utc)
+NOW = datetime.now(UTC)
 REQ = ToolRequest(order_id="order_1042", amount=Decimal("100.00"), reason="refund", operation_id="op")
 
 

@@ -2,7 +2,7 @@ from decimal import Decimal
 
 from app.domain.contracts import ServerContext, ToolRequest
 from app.domain.enums import Decision, DenyReason, QuarantineReason
-from app.services.refund_workflow import RefundRepository, RefundWorkflow
+from app.services.refund_workflow import RefundWorkflow
 
 
 def ctx(tenant="tenant_001", user="user_001"):

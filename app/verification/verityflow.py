@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from math import isfinite
-from typing import Optional
 
 from sqlalchemy import text
 
-from app.security.capability_manager import CapabilityRecord, ReasonCode, validate as validate_capability
+from app.security.capability_manager import CapabilityRecord
+from app.security.capability_manager import validate as validate_capability
 
 
 class VerityReason(str, Enum):
@@ -31,10 +32,10 @@ VALID_STATES = frozenset({"PAID", "FULFILLED", "REFUNDABLE"})
 
 
 def _valid_amount(amount) -> bool:
-    return isinstance(amount, Decimal) and amount.is_finite() and amount > 0 and amount.as_tuple().exponent >= -2
+    return isinstance(amount, Decimal) and amount.is_finite() and amount > 0 and int(amount.as_tuple().exponent) >= -2
 
 
-def evaluate_snapshot(order: Optional[dict], request, ctx, capability: Optional[CapabilityRecord], duplicate: bool, now: datetime) -> VerityFlowResult:
+def evaluate_snapshot(order: dict | None, request, ctx, capability: CapabilityRecord | None, duplicate: bool, now: datetime) -> VerityFlowResult:
     reasons = []
     checks = {}
     amount = getattr(request, "amount", None)
@@ -47,7 +48,10 @@ def evaluate_snapshot(order: Optional[dict], request, ctx, capability: Optional[
     checks["V3"] = order is not None and order.get("status") in VALID_STATES
     if not checks["V3"]:
         reasons.append(VerityReason.ORDER_STATE_INVALID)
-    checks["V4"] = _valid_amount(amount) and order is not None and amount <= Decimal(str(order.get("refundable_balance", "0")))
+    if isinstance(amount, Decimal) and order is not None:
+        checks["V4"] = _valid_amount(amount) and amount <= Decimal(str(order.get("refundable_balance", "0")))
+    else:
+        checks["V4"] = False
     if not checks["V4"]:
         reasons.append(VerityReason.AMOUNT_EXCEEDS_BALANCE)
     capability_result = validate_capability(capability, request, ctx, now)
@@ -63,7 +67,7 @@ def evaluate_snapshot(order: Optional[dict], request, ctx, capability: Optional[
     return VerityFlowResult(not unique_reasons, unique_reasons, checks)
 
 
-def evaluate(connection, request, ctx, capability: Optional[CapabilityRecord], now: datetime) -> VerityFlowResult:
+def evaluate(connection, request, ctx, capability: CapabilityRecord | None, now: datetime) -> VerityFlowResult:
     """Run all six checks under a row lock; this function never calls an AI model."""
     row = connection.execute(text("""
         SELECT tenant_id, owner_user_id, status, refundable_balance

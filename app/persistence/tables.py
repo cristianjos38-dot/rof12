@@ -1,7 +1,17 @@
-from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKeyConstraint, Integer, MetaData, Table, Text, TIMESTAMP, UniqueConstraint
+from sqlalchemy import (
+    TIMESTAMP,
+    Boolean,
+    CheckConstraint,
+    Column,
+    ForeignKeyConstraint,
+    Integer,
+    MetaData,
+    Table,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB, NUMERIC
 from sqlalchemy.sql import text
-
 
 metadata = MetaData(schema="rof12")
 

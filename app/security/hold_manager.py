@@ -1,7 +1,8 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Dict
+from typing import Any
 
 
 class HoldStatus(str, Enum):
@@ -28,13 +29,13 @@ class HoldManager:
     AUTHORIZED_ROLES = frozenset({"approver", "admin", "security_admin"})
 
     def __init__(self):
-        self.holds: Dict[str, Hold] = {}
+        self.holds: dict[str, Hold] = {}
 
     def open(self, hold: Hold) -> Hold:
         self.holds[hold.hold_id] = hold
         return hold
 
-    def resolve(self, hold_id: str, ctx, now: datetime, approve: bool, revalidate: Callable[[], object]) -> Hold:
+    def resolve(self, hold_id: str, ctx, now: datetime, approve: bool, revalidate: Callable[[], Any]) -> Hold:
         hold = self.holds.get(hold_id)
         if hold is None:
             raise HoldError("hold not found")

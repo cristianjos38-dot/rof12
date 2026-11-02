@@ -28,9 +28,9 @@ app = FastAPI(title="ROF12", version="0.1.0")
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(RequestContextMiddleware)
 app.add_middleware(RateLimitMiddleware)
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(ApiDomainError, domain_exception_handler)
+app.add_exception_handler(HTTPException, http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(RequestValidationError, validation_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(ApiDomainError, domain_exception_handler)  # type: ignore[arg-type]
 app.include_router(health_router)
 app.include_router(tasks_router)
 app.include_router(v1_tasks_router)

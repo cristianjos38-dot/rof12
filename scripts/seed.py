@@ -3,7 +3,6 @@ import os
 
 from sqlalchemy import create_engine, text
 
-
 DATABASE_OWNER_URL = os.getenv(
     "DATABASE_OWNER_URL",
     "postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5432/rof12",

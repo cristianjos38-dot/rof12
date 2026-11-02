@@ -1,6 +1,6 @@
-from decimal import Decimal
 
-import pytest
+
+from pydantic import ValidationError
 
 from app.agents.model_router import ModelRouter
 from app.api.dependencies import AuthContext
@@ -16,8 +16,8 @@ def test_mock_adversarial_requests_cannot_reach_allow():
     for payload in router.adversarial_requests():
         try:
             request = ToolRequest.model_validate(payload)
-        except Exception:
+        except ValidationError:
             continue
-        result = gate.evaluate(context, request, PolicyResult(False, ("adversarial",), {}), None, None, type("V", (), {"checks": {"V2": True, "V4": False, "V5": False}})(), False)
+        result = gate.evaluate(context, request, PolicyResult(GateDecision.DENY, ("adversarial",), {}), None, None, type("V", (), {"checks": {"V2": True, "V4": False, "V5": False}})(), False)
         assert result.decision in {GateDecision.DENY, GateDecision.QUARANTINE}
 

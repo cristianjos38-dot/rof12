@@ -8,7 +8,7 @@ from app.config import JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER, JWT_SECRET
 
 
 def token(**overrides):
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
     payload = {"sub": "user_001", "iss": JWT_ISSUER, "aud": JWT_AUDIENCE, "exp": now + dt.timedelta(minutes=5), "iat": now}
     payload.update(overrides)
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -30,5 +30,5 @@ def test_bad_signature_and_expiration_are_rejected():
     with pytest.raises(AuthenticationError):
         decode_access_token(bad_signature)
     with pytest.raises(AuthenticationError):
-        decode_access_token(token(exp=dt.datetime.now(dt.timezone.utc) - dt.timedelta(minutes=1)))
+        decode_access_token(token(exp=dt.datetime.now(dt.UTC) - dt.timedelta(minutes=1)))
 

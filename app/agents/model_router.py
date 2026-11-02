@@ -1,19 +1,20 @@
+from __future__ import annotations
+
 import json
 import secrets
 import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from decimal import Decimal
 from enum import Enum
 from pathlib import Path
-from decimal import Decimal
-from typing import Optional, Type
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from sqlalchemy import text
 
 from app.config import MODEL_API_KEY, MODEL_API_URL, MODEL_MODE, MODEL_TIMEOUT_SECONDS
-from app.domain.contracts import ModelResponse, ToolRequest
+from app.domain.contracts import ModelResponse
 
 
 class ModelName(str, Enum):
@@ -38,7 +39,7 @@ class ModelRouterError(RuntimeError):
 class ModelRouter:
     """Deterministic local model adapter for bootstrap and tests."""
 
-    def __init__(self, mode: str = MODEL_MODE, fixture_dir: Path = None):
+    def __init__(self, mode: str = MODEL_MODE, fixture_dir: Path | None = None):
         self.mode = mode
         self.fixture_dir = fixture_dir or Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "model_responses"
         self.last_usage = None
@@ -50,7 +51,7 @@ class ModelRouter:
             return ModelResponse(action="refund", rationale="adversarial fixture; never an authorization")
         raise ModelRouterError("complete() requires a fixture in mock/replay mode")
 
-    def route(self, model: str, payload: dict, response_model: Type[BaseModel] = ModelResponse, budget_guard=None, tenant_id: Optional[str] = None) -> BaseModel:
+    def route(self, model: str, payload: dict, response_model: type[BaseModel] = ModelResponse, budget_guard=None, tenant_id: str | None = None) -> BaseModel:
         if model not in {item.value for item in ModelName}:
             raise ModelRouterError("model is not authorized")
         reservation = budget_guard.reserve(tenant_id or "global", model, len(json.dumps(payload)), 512) if budget_guard else None
@@ -66,7 +67,7 @@ class ModelRouter:
                 raise ModelRouterError("unsupported MODEL_MODE")
             if budget_guard:
                 budget_guard.settle(reservation, len(json.dumps(payload)), len(result.model_dump_json()))
-            self.last_usage = ModelUsage(model, len(json.dumps(payload)), len(result.model_dump_json()), Decimal("0"), int((time.monotonic() - started) * 1000))
+            self.last_usage = ModelUsage(model, len(json.dumps(payload)), len(result.model_dump_json()), Decimal(0), int((time.monotonic() - started) * 1000))
             return result
         except Exception:
             if budget_guard:
@@ -87,7 +88,7 @@ class ModelRouter:
         with path.open(encoding="utf-8") as handle:
             return ModelResponse.model_validate(json.load(handle))
 
-    def _live_call(self, model: str, payload: dict, response_model: Type[BaseModel]) -> BaseModel:
+    def _live_call(self, model: str, payload: dict, response_model: type[BaseModel]) -> BaseModel:
         if not MODEL_API_KEY:
             raise ModelRouterError("MODEL_API_KEY is required in live mode")
         body = json.dumps({"model": model, "input": payload}).encode("utf-8")
@@ -107,7 +108,7 @@ class ModelRouter:
                 time.sleep(0.25 * (2 ** attempt))
         raise ModelRouterError("model API retries exhausted") from last_error
 
-    def persist_usage(self, connection, tenant_id: str, request_id: str = None) -> None:
+    def persist_usage(self, connection, tenant_id: str, request_id: str | None = None) -> None:
         if self.last_usage is None:
             return
         usage = self.last_usage

@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.db.connection import create_app_engine
 
@@ -12,7 +13,7 @@ def health() -> dict:
         with create_app_engine().connect() as connection:
             connection.exec_driver_sql("SELECT 1")
             database = "ok"
-    except Exception:
+    except SQLAlchemyError:
         database = "unavailable"
     return {"status": "ok", "service": "rof12", "database": database}
 

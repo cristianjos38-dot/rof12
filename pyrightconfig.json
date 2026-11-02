@@ -1,0 +1,6 @@
+{
+  "include": ["app", "migrations", "tests"],
+  "exclude": ["app/domain"],
+  "typeCheckingMode": "basic",
+  "pythonVersion": "3.11"
+}

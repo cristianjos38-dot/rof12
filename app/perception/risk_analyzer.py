@@ -1,7 +1,7 @@
+import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import Enum
-import re
-from typing import Iterable, Tuple
 
 
 class RiskLevel(str, Enum):
@@ -22,12 +22,12 @@ class RiskSignal:
 @dataclass(frozen=True)
 class ContentRiskReport:
     risk_level: RiskLevel
-    signals: Tuple[RiskSignal, ...]
-    evidence_refs: Tuple[str, ...]
+    signals: tuple[RiskSignal, ...]
+    evidence_refs: tuple[str, ...]
 
 
 PATTERNS = (
-    ("PROMPT_INJECTION", re.compile(r"ignora|ignore|reembolsa|refund|transfiere|transfer|system:|olvida las reglas|forget the rules", re.I)),
+    ("PROMPT_INJECTION", re.compile(r"ignora|ignore|reembolsa|refund|transfiere|transfer|system:|olvida las reglas|forget the rules", re.IGNORECASE)),
 )
 
 
@@ -47,5 +47,5 @@ def analyze_content(regions: Iterable, embedded_text: str = "", discrepancy: boo
         level = RiskLevel.MEDIUM
     else:
         level = RiskLevel.LOW
-    return ContentRiskReport(level, tuple(signals), tuple("%s:%s" % (s.rule, s.page) for s in signals))
+    return ContentRiskReport(level, tuple(signals), tuple(f"{s.rule}:{s.page}" for s in signals))
 

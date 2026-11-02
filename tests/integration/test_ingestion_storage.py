@@ -1,13 +1,14 @@
+from __future__ import annotations
+
 import io
 from pathlib import Path
 
 import pytest
 
 from app.api.dependencies import AuthContext
-from app.perception.file_validator import ValidationError, validate_artifact
+from app.perception.file_validator import validate_artifact
 from app.perception.ingestion import CHUNK_SIZE, IngestionError, receive_stream
 from app.storage.artifact_store import ArtifactStorageError, ArtifactStore
-
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "adversarial"
 
@@ -34,11 +35,11 @@ def test_ingestion_uses_64k_chunks_and_internal_uuid(tmp_path):
             super().__init__(value)
             self.sizes = []
 
-        def read(self, size=-1):
+        def read(self, size: int | None = -1):
             self.sizes.append(size)
             return super().read(size)
 
-    stream = ChunkStream((b"%PDF-1.7\n" + b"x" * (CHUNK_SIZE * 2)))
+    stream = ChunkStream(b"%PDF-1.7\n" + b"x" * (CHUNK_SIZE * 2))
     artifact = receive_stream(context(), "untrusted.pdf", stream)
     assert all(size == CHUNK_SIZE for size in stream.sizes[:-1])
     assert len(artifact.artifact_id) == 36

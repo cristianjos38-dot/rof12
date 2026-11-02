@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import hashlib
 import secrets
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Iterable, Optional
 
 from sqlalchemy import text
 
@@ -46,7 +47,7 @@ def hash_capability(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-def validate(capability: Optional[CapabilityRecord], request, ctx, now: datetime) -> ValidationResult:
+def validate(capability: CapabilityRecord | None, request, ctx, now: datetime) -> ValidationResult:
     reasons = []
     if capability is None:
         return ValidationResult(False, (ReasonCode.CAPABILITY_NOT_FOUND,))
@@ -61,7 +62,7 @@ def validate(capability: Optional[CapabilityRecord], request, ctx, now: datetime
     if capability.subject_user_id != ctx.user_id:
         reasons.append(ReasonCode.CAPABILITY_USER_MISMATCH)
     amount = getattr(request, "amount", None)
-    if not isinstance(amount, Decimal) or not amount.is_finite() or amount.as_tuple().exponent < -2 or amount <= 0 or amount > capability.max_amount:
+    if not isinstance(amount, Decimal) or not amount.is_finite() or int(amount.as_tuple().exponent) < -2 or amount <= 0 or amount > capability.max_amount:
         reasons.append(ReasonCode.CAPABILITY_AMOUNT_EXCEEDED)
     return ValidationResult(not reasons, tuple(reasons))
 
@@ -73,7 +74,7 @@ class CapabilityManager:
     def issue(self, tenant_id: str, subject_user_id: str, max_amount: Decimal, ttl: timedelta, scope: str = "refund") -> str:
         token = secrets.token_urlsafe(32)
         capability_id = secrets.token_hex(16)
-        expires_at = datetime.now(timezone.utc) + ttl
+        expires_at = datetime.now(UTC) + ttl
         self.connection.execute(text("""
             INSERT INTO rof12.capabilities
                 (capability_id, tenant_id, subject_user_id, token_hash, scope, max_amount, status, expires_at)
@@ -82,8 +83,8 @@ class CapabilityManager:
                "token_hash": hash_capability(token), "scope": scope, "max_amount": max_amount, "expires_at": expires_at})
         return token
 
-    def consume(self, token: str, request, ctx, now: Optional[datetime] = None) -> Optional[str]:
-        moment = now or datetime.now(timezone.utc)
+    def consume(self, token: str, request, ctx, now: datetime | None = None) -> str | None:
+        moment = now or datetime.now(UTC)
         row = self.connection.execute(text("""
             UPDATE rof12.capabilities
                SET status = 'CONSUMED', consumed_at = :now

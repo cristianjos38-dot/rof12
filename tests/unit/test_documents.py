@@ -31,5 +31,5 @@ def test_document_filename_cannot_escape_tenant_storage(tmp_path: Path):
 
 def test_document_input_rejects_agent_identity_fields():
     with pytest.raises(ValueError):
-        DocumentUpload(filename="x.txt", media_type="text/plain", content=b"x", tenant_id="tenant_002")
+        DocumentUpload(filename="x.txt", media_type="text/plain", content=b"x", tenant_id="tenant_002")  # pyright: ignore[reportCallIssue]
 

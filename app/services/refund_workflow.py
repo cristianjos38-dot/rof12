@@ -1,11 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Dict, Set
 
 from app.domain.contracts import GateResult, ServerContext, ToolRequest
 from app.domain.enums import Decision, DenyReason, QuarantineReason, RefundStatus
-from app.tools.refund_service import execute_refund
-
 
 CAPABILITY_LIMIT = Decimal("200.00")
 APPROVAL_THRESHOLD = Decimal("180.00")
@@ -20,11 +19,11 @@ class OrderRecord:
 
 @dataclass
 class RefundRepository:
-    orders: Dict[str, OrderRecord] = field(default_factory=dict)
-    operation_ids: Set[str] = field(default_factory=set)
+    orders: dict[str, OrderRecord] = field(default_factory=dict)
+    operation_ids: set[str] = field(default_factory=set)
 
     @classmethod
-    def fixture(cls) -> "RefundRepository":
+    def fixture(cls) -> RefundRepository:
         return cls(
             orders={
                 "order_1042": OrderRecord("tenant_001", Decimal("250.00")),
@@ -37,12 +36,12 @@ class RefundRepository:
 class RefundWorkflow:
     """Authoritative gate and the sole caller of the refund side-effect tool."""
 
-    def __init__(self, repository: RefundRepository = None):
+    def __init__(self, repository: RefundRepository | None = None):
         self.repository = repository or RefundRepository.fixture()
 
     def process(self, context: ServerContext, request: ToolRequest) -> GateResult:
         # Start denied. Every subsequent branch must explicitly establish a safer state.
-        denied = self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.DEFAULT_DENY)
+        self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.DEFAULT_DENY)
         order = self.repository.orders.get(request.order_id)
         if order is None or not context.user_id or not context.tenant_id:
             return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.INVALID_CONTEXT)
@@ -67,14 +66,15 @@ class RefundWorkflow:
 
     def execute_transaction(self, connection, context, request, capability, provenance, risk_report, now, capability_token):
         """The only production execution sequence; caller supplies an open DB transaction."""
-        from datetime import timezone
+        from sqlalchemy import text
+
         from app.persistence.audit_logger import AuditLogger
-        from app.security.capability_manager import CapabilityManager, validate as validate_capability
+        from app.security.capability_manager import CapabilityManager
+        from app.security.capability_manager import validate as validate_capability
         from app.security.kill_switch import KillSwitch
         from app.security.security_gate import SecurityGate
-        from app.verification.verityflow import evaluate
         from app.tools.refund_service import execute_refund_transaction
-        from sqlalchemy import text
+        from app.verification.verityflow import evaluate
 
         # 1–4: receive, context, authority and emergency state.
         state = KillSwitch().read(connection)

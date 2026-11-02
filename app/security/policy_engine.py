@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 
@@ -13,7 +15,7 @@ class GateDecision(str, Enum):
 class PolicyResult:
     decision: GateDecision = GateDecision.DENY
     reasons: tuple = ()
-    dimensions: dict = None
+    dimensions: dict | None = None
 
 
 def evaluate(ctx, request, capability, provenance, risk_report, verity_result, system_state) -> PolicyResult:
