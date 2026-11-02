@@ -2,7 +2,7 @@
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 
-from app.config import JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER, JWT_SECRET
+from app.config import JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER, JWT_PUBLIC_KEY, JWT_SECRET
 
 ALLOWED_CLAIMS = frozenset({"sub", "iss", "aud", "exp", "iat"})
 
@@ -15,7 +15,7 @@ def decode_access_token(token: str) -> dict:
     try:
         claims = jwt.decode(
             token,
-            JWT_SECRET,
+            JWT_PUBLIC_KEY or JWT_SECRET,
             algorithms=[JWT_ALGORITHM],
             issuer=JWT_ISSUER,
             audience=JWT_AUDIENCE,

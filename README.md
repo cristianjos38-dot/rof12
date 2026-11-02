@@ -1,6 +1,6 @@
-# ROF12 — Secure Runtime for Intelligent Agents
+# ROF12 — Runtime de Ejecución Segura y Freno Universal para Agentes de IA
 
-ROF12 es un runtime local orientado a agentes inteligentes con autoridad del servidor, aislamiento multi-tenant, decisiones default-deny, procedencia trazable y ejecución financiera con precisión exacta.
+ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autoridad limitada, verificable y revocable. El reembolso es el primer caso de prueba demostrable; el núcleo de Capacidades atómicas, Taint Tracking, VerityFlow, Policy Engine Default-Deny, Security Gate y Audit Chain se aplica de la misma forma a DevOps, Finanzas, Legal y APIs operativas.
 
 ## Estado para evaluación
 
@@ -103,4 +103,18 @@ El remoto canónico publicado es `https://github.com/cristianjos38-dot/rof12.git
 git remote -v
 git log --oneline --decorate --max-count=8
 ```
+
+## Staging con Supabase y Cloudflare
+
+La configuración de staging usa `rof12_app` para la API, `rof12_owner` únicamente para migraciones/seed y `DATABASE_PREPARE_THRESHOLD=none` cuando se utiliza Transaction Pooler. JWT se valida con `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_ALGORITHM=RS256` y `JWT_PUBLIC_KEY`, siempre inyectados como secretos. Consulte [docs/SUPABASE_STAGING.md](docs/SUPABASE_STAGING.md).
+
+Con las variables configuradas de forma segura, la validación reproducible es:
+
+```bash
+alembic upgrade head
+DATABASE_OWNER_URL="$DATABASE_OWNER_URL" make seed
+make smoke-staging
+```
+
+El workflow `.github/workflows/deploy-staging.yml` ejecuta checks, migraciones, seed y smoke test usando GitHub Environment `staging`. Cloudflare debe configurarse con TLS Full (strict), WAF, rate limiting y Access para `/ui/*` y `/v1/security/*`; ningún token de Cloudflare se almacena en el repositorio.
 

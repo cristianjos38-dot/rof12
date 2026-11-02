@@ -1,4 +1,4 @@
-.PHONY: install test run lint check adversarial db-up db-down migrate seed
+.PHONY: install test run lint check adversarial smoke-staging db-up db-down migrate seed
 
 PYTHON ?= python3.11
 
@@ -27,6 +27,9 @@ migrate:
 
 seed:
 	DATABASE_OWNER_URL=$${DATABASE_OWNER_URL:-postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5433/rof12} $(PYTHON) scripts/seed.py
+
+smoke-staging:
+	$(PYTHON) scripts/smoke_staging.py
 
 lint:
 	$(PYTHON) -m compileall -q app tests scripts

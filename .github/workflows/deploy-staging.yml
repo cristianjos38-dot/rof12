@@ -1,0 +1,47 @@
+name: ROF12 staging validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: rof12-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      APP_ENV: staging
+      MODEL_MODE: mock
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_OWNER_URL: ${{ secrets.DATABASE_OWNER_URL }}
+      DATABASE_PREPARE_THRESHOLD: none
+      JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+      JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE }}
+      JWT_PUBLIC_KEY: ${{ secrets.JWT_PUBLIC_KEY }}
+      JWT_ALGORITHM: RS256
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install project dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+      - name: Run checks
+        run: make check
+      - name: Apply staging migrations
+        run: alembic upgrade head
+      - name: Seed staging laboratory data
+        run: python scripts/seed.py
+      - name: Smoke test deployed API
+        env:
+          STAGING_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          STAGING_JWT: ${{ secrets.STAGING_JWT }}
+          STAGING_TENANT_ID: ${{ secrets.STAGING_TENANT_ID }}
+        run: make smoke-staging

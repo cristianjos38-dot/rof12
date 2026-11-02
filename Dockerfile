@@ -5,7 +5,8 @@ COPY app app
 COPY scripts scripts
 COPY migrations migrations
 COPY alembic.ini .
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir . pip-audit
 ENV MODEL_MODE=mock PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 

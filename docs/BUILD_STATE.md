@@ -2,6 +2,15 @@
 
 CURRENT_PHASE: 16
 
+## Posicionamiento del núcleo
+
+ROF12 es un Runtime de Ejecución Segura y Freno Universal para Agentes de IA,
+agnóstico a la industria. Los reembolsos son el primer caso demostrable; las
+Capacidades atómicas, Taint Tracking, VerityFlow, Policy Engine Default-Deny,
+Security Gate y Audit Chain son controles universales aplicables también a
+DevOps, Finanzas, Legal y APIs operativas. La preparación de staging de Fase 17
+permanece aislada hasta disponer de credenciales reales de Supabase y Cloudflare.
+
 ## Bootstrap status
 
 - Fase 0: project scaffold, configuration, health endpoint, and reproducible local test setup.
