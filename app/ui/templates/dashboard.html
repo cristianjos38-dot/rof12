@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}ROF12 · Panel de control{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">RUNTIME SEGURO PARA AGENTES</p>
+    <h1>Panel de control</h1>
+    <p class="muted">Operador <strong>{{ auth.user_id }}</strong>. Las decisiones siguen siendo del servidor.</p>
+  </div>
+  <div class="tenant-card"><span>Tenant resuelto</span><strong>{{ auth.tenant_id }}</strong></div>
+</section>
+
+<section class="grid" aria-label="Estado operativo">
+  <article class="card">
+    <div class="card-heading"><h2>Holds pendientes</h2><button class="button" hx-get="/ui/partials/holds" hx-target="#holds" hx-swap="innerHTML">Actualizar</button></div>
+    <div id="holds">{% include "partials/holds.html" %}</div>
+  </article>
+  <article class="card">
+    <div class="card-heading"><h2>Artefactos</h2><button class="button" hx-get="/ui/partials/artifacts" hx-target="#artifacts" hx-swap="innerHTML">Actualizar</button></div>
+    <div id="artifacts">{% include "partials/artifacts.html" %}</div>
+  </article>
+  <article class="card">
+    <div class="card-heading"><h2>Seguridad</h2><button class="button" hx-get="/ui/partials/security" hx-target="#security" hx-swap="innerHTML">Actualizar</button></div>
+    <div id="security">{% include "partials/security.html" %}</div>
+  </article>
+</section>
+{% endblock %}

@@ -43,7 +43,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         if request.method in {"POST", "PUT", "PATCH", "DELETE"} or request.url.path.startswith("/v1/security/"):
-            key = "%s:%s" % (request.client.host if request.client else "unknown", request.url.path)
+            key = f"{request.client.host if request.client else 'unknown'}:{request.url.path}"
             now = time.monotonic()
             hits = self.hits[key]
             while hits and now - hits[0] > self.window:
@@ -53,4 +53,20 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 return JSONResponse({"code": "RATE_LIMITED", "message": "rate limit exceeded", "request_id": rid}, status_code=429, headers={"X-Request-ID": rid})
             hits.append(now)
         return await call_next(request)
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Apply browser hardening consistently, including static UI responses."""
+
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; script-src 'self'; style-src 'self'; "
+            "img-src 'self' data:; connect-src 'self'; object-src 'none'; "
+            "base-uri 'none'; frame-ancestors 'none'",
+        )
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("Referrer-Policy", "no-referrer")
+        return response
 

@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}ROF12 Control Panel{% endblock %}</title>
+    <link rel="stylesheet" href="/ui/static/app.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/ui/">ROF12</a>
+      <span class="badge">{{ auth.role }}</span>
+      <span class="muted">Sesión de servidor activa</span>
+    </header>
+    <main class="shell">{% block content %}{% endblock %}</main>
+    <script src="/ui/static/htmx.min.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{% if artifacts %}
+<ul class="items">
+  {% for artifact in artifacts %}
+  <li>
+    <strong>{{ artifact.artifact_id }}</strong>
+    <span>{{ artifact.byte_size }} bytes</span>
+    {% if artifact.risk_report %}<span class="warning">Riesgo: {{ artifact.risk_report.risk_level }}</span>{% endif %}
+    <p class="untrusted"><span class="label">Contenido no confiable</span>{% if artifact.original_filename %} {{ artifact.original_filename }}{% endif %}</p>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<p class="empty">No hay artefactos registrados.</p>{% endif %}

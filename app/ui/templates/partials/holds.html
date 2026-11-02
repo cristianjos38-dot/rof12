@@ -1,0 +1,5 @@
+{% if holds %}
+<ul class="items">
+  {% for hold in holds %}<li><strong>{{ hold.hold_id }}</strong><span>{{ hold.status }}</span><small>{{ hold.expires_at }}</small></li>{% endfor %}
+</ul>
+{% else %}<p class="empty">No hay holds para este tenant.</p>{% endif %}
