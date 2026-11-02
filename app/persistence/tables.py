@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint, Column, ForeignKeyConstraint, MetaData, Table, Text, TIMESTAMP, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKeyConstraint, MetaData, Table, Text, TIMESTAMP, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, NUMERIC
 from sqlalchemy.sql import text
 
@@ -122,6 +122,50 @@ capabilities = Table(
     Column("consumed_at", TIMESTAMP(timezone=True)),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     ForeignKeyConstraint(["tenant_id", "subject_user_id"], ["rof12.users.tenant_id", "rof12.users.user_id"], name="capabilities_user_fk"),
+)
+
+system_state = Table(
+    "system_state", metadata,
+    Column("state_id", Boolean, primary_key=True, server_default=text("true")),
+    Column("kill_switch_active", Boolean, nullable=False, server_default=text("false")),
+    Column("reason", Text, nullable=False, server_default=text("''")),
+    Column("updated_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+)
+
+holds = Table(
+    "holds", metadata,
+    Column("hold_id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("operation_id", Text, nullable=False),
+    Column("created_by", Text, nullable=False),
+    Column("status", Text, nullable=False),
+    Column("expires_at", TIMESTAMP(timezone=True), nullable=False),
+    Column("resolved_by", Text),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="holds_tenant_fk"),
+)
+
+gate_decisions = Table(
+    "gate_decisions", metadata,
+    Column("decision_id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("operation_id", Text, nullable=False),
+    Column("decision", Text, nullable=False),
+    Column("reasons", JSONB, nullable=False, server_default=text("'[]'::jsonb")),
+    Column("permit_id", Text),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="gate_decisions_tenant_fk"),
+)
+
+outbox_events = Table(
+    "outbox_events", metadata,
+    Column("event_id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("event_type", Text, nullable=False),
+    Column("payload", JSONB, nullable=False),
+    Column("published_at", TIMESTAMP(timezone=True)),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="outbox_events_tenant_fk"),
 )
 
 audit_events = Table(

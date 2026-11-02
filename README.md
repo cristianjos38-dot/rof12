@@ -15,6 +15,9 @@ ROF12 es un runtime local orientado a agentes inteligentes con autoridad del ser
 | F6 | Completada | Inspección PDF, OCR intercambiable, análisis visual y risk analyzer neutral |
 | F7 | Completada | Capabilities hash-only, consumo atómico, expiración y revocación |
 | F8 | Completada | VerityFlow V1–V6 determinista y financiero con `Decimal` |
+| F9 | Completada | Policy Engine puro, default-deny y taint-aware |
+| F10 | Completada | Holds, Kill Switch y cadena de auditoría criptográfica |
+| F11 | Completada | Security Gate, permisos internos y ejecución transaccional |
 
 El `perception-worker` está configurado con aislamiento Docker; su ejecución en un daemon Docker real sigue pendiente de validación en este entorno.
 

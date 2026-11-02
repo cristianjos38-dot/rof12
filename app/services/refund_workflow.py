@@ -62,9 +62,46 @@ class RefundWorkflow:
             return self._result(request, Decision.REQUIRE_APPROVAL, RefundStatus.HELD_FOR_APPROVAL)
 
         self.repository.operation_ids.add(request.operation_id)
-        execute_refund(request.order_id, request.amount, request.operation_id)
         order.refundable_balance -= request.amount
         return self._result(request, Decision.ALLOW, RefundStatus.EXECUTED)
+
+    def execute_transaction(self, connection, context, request, capability, provenance, risk_report, now, capability_token):
+        """The only production execution sequence; caller supplies an open DB transaction."""
+        from datetime import timezone
+        from app.persistence.audit_logger import AuditLogger
+        from app.security.capability_manager import CapabilityManager, validate as validate_capability
+        from app.security.kill_switch import KillSwitch
+        from app.security.security_gate import SecurityGate
+        from app.verification.verityflow import evaluate
+        from app.tools.refund_service import execute_refund_transaction
+        from sqlalchemy import text
+
+        # 1–4: receive, context, authority and emergency state.
+        state = KillSwitch().read(connection)
+        capability_validation = validate_capability(capability, request, context, now)
+        # 5–6: VerityFlow acquires FOR UPDATE and all policy dimensions revalidate.
+        verity = evaluate(connection, request, context, capability, now)
+        gate = SecurityGate()
+        policy = gate.evaluate(context, request, capability_validation, provenance, risk_report, verity, state)
+        connection.execute(text("""
+            INSERT INTO rof12.gate_decisions (decision_id, tenant_id, operation_id, decision, reasons)
+            VALUES (:id, :tenant_id, :operation_id, :decision, CAST(:reasons AS jsonb))
+        """), {"id": request.operation_id, "tenant_id": context.tenant_id, "operation_id": request.operation_id,
+               "decision": policy.decision.value, "reasons": __import__("json").dumps(policy.reasons)})
+        if policy.decision.value != "ALLOW":
+            return policy
+        # 7: one-time atomic capability consumption; 8: tool writes in this same transaction.
+        permit = gate.mint_if_allowed(policy)
+        if not CapabilityManager(connection).consume(capability_token, request, context, now):
+            raise PermissionError("capability was not consumable")
+        execute_refund_transaction(connection, request, context, permit)
+        # 9: outbox and audit are part of this transaction; commit belongs to the caller.
+        connection.execute(text("""
+            INSERT INTO rof12.outbox_events (event_id, tenant_id, event_type, payload)
+            VALUES (:id, :tenant_id, 'REFUND_EXECUTED', CAST(:payload AS jsonb))
+        """), {"id": permit.permit_id, "tenant_id": context.tenant_id, "payload": __import__("json").dumps({"operation_id": request.operation_id})})
+        AuditLogger().append(connection, permit.permit_id, context.tenant_id, "REFUND_EXECUTED", context.user_id, {"operation_id": request.operation_id})
+        return permit
 
     @staticmethod
     def _result(request, decision, status, deny_reason=None, quarantine_reason=None):
