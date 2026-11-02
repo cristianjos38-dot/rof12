@@ -1,10 +1,12 @@
-.PHONY: install test run lint db-up db-down migrate
+.PHONY: install test run lint check db-up db-down migrate
 
 install:
 	python3 -m pip install -e '.[dev]'
 
 test:
 	MODEL_MODE=mock python3 -m pytest
+
+check: lint test
 
 run:
 	MODEL_MODE=mock uvicorn app.main:app --reload
