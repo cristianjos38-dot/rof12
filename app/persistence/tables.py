@@ -79,6 +79,35 @@ provenance_records = Table(
     ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="provenance_records_tenant_fk"),
 )
 
+documents = Table(
+    "documents", metadata,
+    Column("tenant_id", Text, primary_key=True),
+    Column("document_id", Text, primary_key=True),
+    Column("original_filename", Text, nullable=False),
+    Column("media_type", Text, nullable=False),
+    Column("byte_size", NUMERIC(12, 0), nullable=False),
+    Column("content_sha256", Text, nullable=False),
+    Column("storage_key", Text, nullable=False),
+    Column("provenance_id", Text, nullable=False),
+    Column("created_by", Text, nullable=False),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    UniqueConstraint("tenant_id", "content_sha256", name="documents_content_sha256_uq"),
+    ForeignKeyConstraint(["tenant_id", "provenance_id"], ["rof12.provenance_records.tenant_id", "rof12.provenance_records.provenance_id"], name="documents_provenance_fk"),
+)
+
+document_fragments = Table(
+    "document_fragments", metadata,
+    Column("tenant_id", Text, primary_key=True),
+    Column("document_id", Text, primary_key=True),
+    Column("fragment_id", Text, primary_key=True),
+    Column("ordinal", NUMERIC(12, 0), nullable=False),
+    Column("content_sha256", Text, nullable=False),
+    Column("text_content", Text, nullable=False),
+    Column("is_tainted", Text, nullable=False, server_default=text("'true'")),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    ForeignKeyConstraint(["tenant_id", "document_id"], ["rof12.documents.tenant_id", "rof12.documents.document_id"], name="document_fragments_document_fk"),
+)
+
 audit_events = Table(
     "audit_events", metadata,
     Column("event_id", Text, primary_key=True),

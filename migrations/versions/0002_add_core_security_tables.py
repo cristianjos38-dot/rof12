@@ -69,7 +69,7 @@ GRANT SELECT, INSERT ON rof12.provenance_records TO rof12_app;
 GRANT SELECT ON rof12.users, rof12.memberships, rof12.provenance_records TO rof12_executor;
 GRANT SELECT ON rof12.users, rof12.memberships TO rof12_audit;
 GRANT SELECT ON rof12.provenance_records TO rof12_audit;
-REVOKE UPDATE, DELETE ON rof12.provenance_records FROM rof12_app, rof12_executor, rof12_audit;
+REVOKE UPDATE, DELETE ON rof12.provenance_records FROM rof12_app, rof12_executor, rof12_audit
 """
 
 DOWNGRADE_SQL = """
@@ -77,7 +77,7 @@ DROP TABLE IF EXISTS rof12.provenance_records;
 DROP TABLE IF EXISTS rof12.memberships;
 ALTER TABLE rof12.orders DROP CONSTRAINT IF EXISTS orders_owner_user_fk;
 ALTER TABLE rof12.audit_events DROP CONSTRAINT IF EXISTS audit_events_actor_user_fk;
-DROP TABLE IF EXISTS rof12.users;
+DROP TABLE IF EXISTS rof12.users
 """
 
 

@@ -36,4 +36,14 @@ def test_core_security_tables_and_metadata_are_present():
     from app.persistence.tables import metadata
 
     assert {"rof12.users", "rof12.memberships", "rof12.provenance_records"}.issubset(metadata.tables)
+    assert {"rof12.documents", "rof12.document_fragments"}.issubset(metadata.tables)
+
+
+def test_document_migration_is_tenant_isolated_and_append_only():
+    migration = (ROOT / "migrations" / "versions" / "0003_add_isolated_documents.py").read_text(encoding="utf-8")
+    assert "CREATE TABLE rof12.documents" in migration
+    assert "CREATE TABLE rof12.document_fragments" in migration
+    assert "ENABLE ROW LEVEL SECURITY" in migration
+    assert "current_setting('app.tenant_id', true)" in migration
+    assert "REVOKE UPDATE, DELETE ON rof12.documents, rof12.document_fragments" in migration
 

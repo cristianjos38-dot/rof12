@@ -95,7 +95,7 @@ REVOKE UPDATE, DELETE ON rof12.refunds FROM rof12_executor;
 REVOKE INSERT, UPDATE, DELETE ON rof12.order_balances FROM rof12_executor;
 
 GRANT SELECT, INSERT ON rof12.audit_events TO rof12_audit;
-REVOKE UPDATE, DELETE ON rof12.audit_events FROM rof12_audit;
+REVOKE UPDATE, DELETE ON rof12.audit_events FROM rof12_audit
 """
 
 DOWNGRADE_SQL = """
@@ -104,7 +104,7 @@ DROP TABLE IF EXISTS rof12.refunds;
 DROP TABLE IF EXISTS rof12.order_balances;
 DROP TABLE IF EXISTS rof12.orders;
 DROP TABLE IF EXISTS rof12.tenants;
-DROP SCHEMA IF EXISTS rof12;
+DROP SCHEMA IF EXISTS rof12
 """
 
 
