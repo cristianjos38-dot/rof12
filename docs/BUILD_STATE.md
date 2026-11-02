@@ -1,6 +1,6 @@
 # ROF12 build state
 
-CURRENT_PHASE: 12
+CURRENT_PHASE: 13
 
 ## Bootstrap status
 
@@ -17,6 +17,7 @@ CURRENT_PHASE: 12
 - Fase 10: hold state machine, authorized revalidation, kill switch, and cryptographically chained audit logger.
 - Fase 11: internal non-serializable execution permits, immutable tool registry, transactional refund execution and outbox events.
 - Fase 12: Meta multi-mode router, preventive budget guard, read-only orchestrator, prompt delimiters, SAM parser and adversarial mock mode.
+- Fase 13: protected FastAPI v1 routes, request IDs, sanitized structured logging, uniform JSON errors and security administration endpoints.
 
 Fase 6–8 validation evidence: `37 passed`; Fase 9–11 adds deterministic policy, hold, audit and gate suites; Fase 12 raises the full local suite to `53 passed`. All tests run without LLM calls; adversarial mode is intentionally synthetic.
 

@@ -1,0 +1,22 @@
+import base64
+
+
+def test_task_artifact_and_audit_flow(client):
+    created = client.post("/v1/tasks", json={"task_type": "refund_review", "payload": {"order_id": "order_1042"}})
+    assert created.status_code == 200
+    task_id = created.json()["task_id"]
+    assert client.get("/v1/tasks/" + task_id).json()["tenant_id"] == "tenant_001"
+    artifact = client.post("/v1/artifacts", json={"filename": "invoice.pdf", "media_type": "application/pdf", "content_base64": base64.b64encode(b"%PDF-local").decode()})
+    assert artifact.status_code == 201
+    artifact_id = artifact.json()["artifact_id"]
+    linked = client.post("/v1/tasks/%s/artifacts" % task_id, json={"artifact_id": artifact_id})
+    assert linked.status_code == 200
+    assert artifact_id in linked.json()["artifacts"]
+    assert client.get("/v1/tasks/%s/audit" % task_id).status_code == 200
+
+
+def test_task_body_cannot_supply_tenant(client):
+    response = client.post("/v1/tasks", json={"task_type": "x", "payload": {}, "tenant_id": "tenant_002"})
+    assert response.status_code == 422
+    assert response.json()["code"] == "VALIDATION_ERROR"
+

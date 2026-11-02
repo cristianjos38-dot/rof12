@@ -107,14 +107,14 @@ class ModelRouter:
                 time.sleep(0.25 * (2 ** attempt))
         raise ModelRouterError("model API retries exhausted") from last_error
 
-    def persist_usage(self, connection, tenant_id: str) -> None:
+    def persist_usage(self, connection, tenant_id: str, request_id: str = None) -> None:
         if self.last_usage is None:
             return
         usage = self.last_usage
         connection.execute(text("""
-            INSERT INTO rof12.model_usage (usage_id, tenant_id, model, input_tokens, output_tokens, estimated_cost, latency_ms)
-            VALUES (:usage_id, :tenant_id, :model, :input_tokens, :output_tokens, :estimated_cost, :latency_ms)
+            INSERT INTO rof12.model_usage (usage_id, tenant_id, model, input_tokens, output_tokens, estimated_cost, latency_ms, request_id)
+            VALUES (:usage_id, :tenant_id, :model, :input_tokens, :output_tokens, :estimated_cost, :latency_ms, :request_id)
         """), {"usage_id": secrets.token_hex(16), "tenant_id": tenant_id, "model": usage.model,
                "input_tokens": usage.input_tokens, "output_tokens": usage.output_tokens,
-               "estimated_cost": usage.estimated_cost, "latency_ms": usage.latency_ms})
+               "estimated_cost": usage.estimated_cost, "latency_ms": usage.latency_ms, "request_id": request_id})
 

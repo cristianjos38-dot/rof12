@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import text
 
@@ -51,6 +51,7 @@ def resolve_auth_context(claims: dict, connection, tenant_selector: Optional[str
 
 
 def get_auth_context(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer),
     tenant_selector: Optional[str] = Header(default=None, alias="X-Tenant-ID"),
 ) -> AuthContext:
@@ -60,7 +61,9 @@ def get_auth_context(
         claims = decode_access_token(credentials.credentials)
         engine = create_app_engine()
         with engine.begin() as connection:
-            return resolve_auth_context(claims, connection, tenant_selector)
+            context = resolve_auth_context(claims, connection, tenant_selector)
+            request.state.auth_context = context
+            return context
     except AuthenticationError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
 

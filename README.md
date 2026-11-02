@@ -19,6 +19,7 @@ ROF12 es un runtime local orientado a agentes inteligentes con autoridad del ser
 | F10 | Completada | Holds, Kill Switch y cadena de auditoría criptográfica |
 | F11 | Completada | Security Gate, permisos internos y ejecución transaccional |
 | F12 | Completada | Router Meta multi-modo, orquestador read-only, prompts aislados y Budget Guard |
+| F13 | Completada | API FastAPI v1, observabilidad, rate limiting y administración de seguridad |
 
 El `perception-worker` está configurado con aislamiento Docker; su ejecución en un daemon Docker real sigue pendiente de validación en este entorno.
 
