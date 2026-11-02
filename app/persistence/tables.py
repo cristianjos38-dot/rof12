@@ -35,6 +35,7 @@ orders = Table(
     Column("tenant_id", Text, primary_key=True),
     Column("order_id", Text, primary_key=True),
     Column("owner_user_id", Text, nullable=False),
+    Column("status", Text, nullable=False, server_default=text("'PAID'")),
     Column("refundable_balance", NUMERIC(12, 2), nullable=False),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     CheckConstraint("refundable_balance >= 0", name="orders_refundable_balance_ck"),
@@ -106,6 +107,21 @@ document_fragments = Table(
     Column("is_tainted", Text, nullable=False, server_default=text("'true'")),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     ForeignKeyConstraint(["tenant_id", "document_id"], ["rof12.documents.tenant_id", "rof12.documents.document_id"], name="document_fragments_document_fk"),
+)
+
+capabilities = Table(
+    "capabilities", metadata,
+    Column("capability_id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("subject_user_id", Text, nullable=False),
+    Column("token_hash", Text, nullable=False, unique=True),
+    Column("scope", Text, nullable=False),
+    Column("max_amount", NUMERIC(12, 2), nullable=False),
+    Column("status", Text, nullable=False),
+    Column("expires_at", TIMESTAMP(timezone=True), nullable=False),
+    Column("consumed_at", TIMESTAMP(timezone=True)),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    ForeignKeyConstraint(["tenant_id", "subject_user_id"], ["rof12.users.tenant_id", "rof12.users.user_id"], name="capabilities_user_fk"),
 )
 
 audit_events = Table(

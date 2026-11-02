@@ -16,7 +16,7 @@
 ## Known limitations
 
 - The live PostgreSQL/Docker demonstration has not been executed in this environment because the Docker daemon is unavailable.
-- `perception-worker` is not implemented.
+- The `perception-worker` entry point and Compose isolation policy are implemented, but live container execution has not been validated because Docker is unavailable in this environment.
 - The model router currently exposes deterministic mock fixtures only; Meta Model API integration is not present in this baseline.
 - Development passwords in Compose/init are not production secrets and must be replaced by secret injection before deployment.
 

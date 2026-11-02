@@ -12,9 +12,11 @@ ROF12 es un runtime local orientado a agentes inteligentes con autoridad del ser
 | F3 | Completada | PostgreSQL, Alembic, RLS, FKs compuestas y roles G5 |
 | F4 | Completada | JWT cerrado, `AuthContext`, membresías activas y provenance tainted |
 | F5 | Completada | Ingesta documental aislada, SHA-256, storage seguro y RLS |
-| F6 | Pendiente | No se incluye implementación en este baseline |
+| F6 | Completada | Inspección PDF, OCR intercambiable, análisis visual y risk analyzer neutral |
+| F7 | Completada | Capabilities hash-only, consumo atómico, expiración y revocación |
+| F8 | Completada | VerityFlow V1–V6 determinista y financiero con `Decimal` |
 
-El módulo `perception-worker` no forma parte del repositorio actual; cualquier aislador de percepción queda explícitamente pendiente y no se presenta como implementado.
+El `perception-worker` está configurado con aislamiento Docker; su ejecución en un daemon Docker real sigue pendiente de validación en este entorno.
 
 ## Requisitos previos
 

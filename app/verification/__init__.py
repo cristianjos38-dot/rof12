@@ -1,0 +1,2 @@
+"""Deterministic financial verification."""
+
