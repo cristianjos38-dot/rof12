@@ -1,6 +1,6 @@
 # ROF12 build state
 
-CURRENT_PHASE: 11
+CURRENT_PHASE: 12
 
 ## Bootstrap status
 
@@ -16,8 +16,9 @@ CURRENT_PHASE: 11
 - Fase 9: pure default-deny Policy Engine with kill-switch, identity, action, resource, authority, constraint and taint dimensions.
 - Fase 10: hold state machine, authorized revalidation, kill switch, and cryptographically chained audit logger.
 - Fase 11: internal non-serializable execution permits, immutable tool registry, transactional refund execution and outbox events.
+- Fase 12: Meta multi-mode router, preventive budget guard, read-only orchestrator, prompt delimiters, SAM parser and adversarial mock mode.
 
-Fase 6–8 validation evidence: `37 passed`; Fase 9–11 adds deterministic policy, hold, audit and gate suites. All tests run locally with `MODEL_MODE=mock` and no LLM calls.
+Fase 6–8 validation evidence: `37 passed`; Fase 9–11 adds deterministic policy, hold, audit and gate suites; Fase 12 raises the full local suite to `53 passed`. All tests run without LLM calls; adversarial mode is intentionally synthetic.
 
 All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap.
 

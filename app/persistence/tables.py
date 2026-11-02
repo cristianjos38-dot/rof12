@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKeyConstraint, MetaData, Table, Text, TIMESTAMP, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Column, ForeignKeyConstraint, Integer, MetaData, Table, Text, TIMESTAMP, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, NUMERIC
 from sqlalchemy.sql import text
 
@@ -166,6 +166,19 @@ outbox_events = Table(
     Column("published_at", TIMESTAMP(timezone=True)),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="outbox_events_tenant_fk"),
+)
+
+model_usage = Table(
+    "model_usage", metadata,
+    Column("usage_id", Text, primary_key=True),
+    Column("tenant_id", Text, nullable=False),
+    Column("model", Text, nullable=False),
+    Column("input_tokens", Integer, nullable=False),
+    Column("output_tokens", Integer, nullable=False),
+    Column("estimated_cost", NUMERIC(12, 6), nullable=False),
+    Column("latency_ms", Integer, nullable=False),
+    Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
+    ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="model_usage_tenant_fk"),
 )
 
 audit_events = Table(
