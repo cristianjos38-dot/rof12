@@ -26,7 +26,7 @@ migrate:
 	alembic upgrade head
 
 seed:
-	DATABASE_OWNER_URL=$${DATABASE_OWNER_URL:-postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5432/rof12} $(PYTHON) scripts/seed.py
+	DATABASE_OWNER_URL=$${DATABASE_OWNER_URL:-postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5433/rof12} $(PYTHON) scripts/seed.py
 
 lint:
 	$(PYTHON) -m compileall -q app tests scripts

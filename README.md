@@ -20,32 +20,46 @@ ROF12 es un runtime local orientado a agentes inteligentes con autoridad del ser
 | F11 | Completada | Security Gate, permisos internos y ejecución transaccional |
 | F12 | Completada | Router Meta multi-modo, orquestador read-only, prompts aislados y Budget Guard |
 | F13 | Completada | API FastAPI v1, observabilidad, rate limiting y administración de seguridad |
+| F14 | Completada | Panel server-rendered seguro con Jinja2, HTMX local y aislamiento por tenant |
+| F15 | Completada | Laboratorio adversarial, cobertura T-01–T-11 y quality gates reproducibles |
+| F16 | En congelación | Replay Baseline vs Protected, arranque Docker limpio y entrega reproducible |
 
 El `perception-worker` está configurado con aislamiento Docker; su ejecución en un daemon Docker real sigue pendiente de validación en este entorno.
 
 ## Requisitos previos
 
 - Docker Desktop con el daemon iniciado.
-- Python 3.12 recomendado (el código declara compatibilidad desde Python 3.9).
+- Python 3.11+ (Docker usa Python 3.12).
 - PostgreSQL 16 mediante Docker Compose.
 
 ## Instalación y demo local
 
 ```bash
-python3 -m pip install -e '.[dev]'
-docker compose up -d postgres
-make migrate
+cp .env.example .env
+mkdir -p secrets
+printf 'lab-password\n' > secrets/db_password.txt
+python3.11 -m pip install -e '.[dev]'
+docker compose up -d --build
+docker compose exec api alembic upgrade head
 make seed
-MODEL_MODE=mock make check
-docker compose up -d rof12
+curl -fsS localhost:8000/health/ready
 ```
 
-La API queda disponible en `http://localhost:8000`; el healthcheck es `GET /health`. El endpoint protegido de demostración es `GET /tasks/context` y requiere Bearer JWT más `X-Tenant-ID`.
+La API queda disponible en `http://localhost:8000`; `/health/ready` solo responde correctamente cuando PostgreSQL está disponible. El endpoint protegido de demostración es `GET /tasks/context` y requiere Bearer JWT más `X-Tenant-ID`.
+
+Para ejecutar el replay comparativo con los mismos siete fixtures y registrar la tabla en PostgreSQL:
+
+```bash
+DATABASE_OWNER_URL=postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5433/rof12 \
+  python3.11 -m demo.replay
+```
+
+El modo Baseline usa únicamente un almacén ficticio en memoria y no importa `app`, no lee secretos ROF12 ni accede a rutas de almacenamiento protegidas. El modo Protected usa la percepción local de ROF12. La salida se consulta después de insertar y leer `rof12.demo_results`; no contiene resultados codificados manualmente.
 
 Para generar un token de laboratorio:
 
 ```bash
-python3 scripts/dev_token.py user_001
+python3.11 scripts/dev_token.py user_001
 ```
 
 Los claims del token son únicamente `sub`, `iss`, `aud`, `exp` e `iat`. El tenant y el rol se resuelven contra PostgreSQL.
@@ -54,8 +68,8 @@ Los claims del token son únicamente `sub`, `iss`, `aud`, `exp` e `iat`. El tena
 
 ```bash
 make check
-MODEL_MODE=mock python3 -m pytest
-python3 -m alembic upgrade head --sql > /tmp/rof12-schema.sql
+MODEL_MODE=mock python3.11 -m pytest
+python3.11 -m alembic upgrade head --sql > /tmp/rof12-schema.sql
 git status --short
 ```
 

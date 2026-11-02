@@ -6,21 +6,33 @@ services:
       POSTGRES_PASSWORD: postgres_dev_only
       POSTGRES_DB: rof12
     ports:
-      - "5432:5432"
+      - "${ROF12_DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rof12"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     volumes:
       - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
-  rof12:
+  api:
     build: .
     environment:
       MODEL_MODE: mock
       DATABASE_URL: postgresql+psycopg://rof12_app:rof12_app_dev_only@postgres:5432/rof12
+      DATABASE_OWNER_URL: postgresql+psycopg://rof12_owner:rof12_owner_dev_only@postgres:5432/rof12
       DOCUMENT_STORAGE_ROOT: /var/lib/rof12/documents
     ports:
       - "8000:8000"
     volumes:
       - rof12_documents:/var/lib/rof12/documents
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready')"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
   perception-worker:
     build: .
     command: ["python", "-m", "app.perception.worker"]

@@ -1,6 +1,6 @@
 # ROF12 build state
 
-CURRENT_PHASE: 15
+CURRENT_PHASE: 16
 
 ## Bootstrap status
 
@@ -20,8 +20,10 @@ CURRENT_PHASE: 15
 - Fase 13: protected FastAPI v1 routes, request IDs, sanitized structured logging, uniform JSON errors and security administration endpoints.
 - Fase 14: server-rendered control panel with local HTMX, strict Jinja autoescape, tenant-scoped service-backed views and browser security headers.
 - Fase 15: adversarial security laboratory, threat-ID coverage, atomicity stress harness and resilience checks.
+- Fase 16: clean-clone Docker bootstrap, seven-fixture Baseline vs Protected replay, PostgreSQL result recording and delivery documentation.
 
 Fase 15 validation evidence: adversarial suite `13 passed`; full suite `79 passed, 1 skipped`; Ruff and Pyright report zero errors; `pip-audit .` reports no known vulnerabilities under Python 3.11. The skipped resilience check requires a live PostgreSQL Docker environment.
+Fase 16 validation evidence: Docker Compose built and started, Alembic reached head, the seven-fixture replay was persisted/read from PostgreSQL, `/health/ready` returned `database=ok`, and the live PostgreSQL reconnection test passed. The clean-clone README flow is reproducible with Python 3.11+.
 
 All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap. The supported runtime is Python 3.11+.
 
