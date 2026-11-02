@@ -72,11 +72,11 @@ El historial público preparado para esta entrega contiene el baseline construid
 Este checkout no tiene remoto configurado. Después de crear un repositorio vacío en GitHub o GitLab, configurar el destino y publicar únicamente el historial actual:
 
 ```bash
-git remote add origin git@github.com:ORGANIZACION/rof12.git
+git remote add origin https://github.com/cristianjos38-dot/rof12.git
 git push -u origin master --tags
 ```
 
-Para HTTPS, sustituir la URL por `https://github.com/ORGANIZACION/rof12.git`. Verificar antes con:
+El remoto canónico publicado es `https://github.com/cristianjos38-dot/rof12.git`; el remoto anterior se conserva localmente como `backup-gsgs01382-stack`. Verificar antes con:
 
 ```bash
 git remote -v
