@@ -1,0 +1,8 @@
+services:
+  rof12:
+    build: .
+    environment:
+      MODEL_MODE: mock
+    ports:
+      - "8000:8000"
+
