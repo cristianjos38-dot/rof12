@@ -1,4 +1,4 @@
-.PHONY: install test run lint check db-up db-down migrate
+.PHONY: install test run lint check db-up db-down migrate seed
 
 install:
 	python3 -m pip install -e '.[dev]'
@@ -19,6 +19,9 @@ db-down:
 
 migrate:
 	alembic upgrade head
+
+seed:
+	DATABASE_OWNER_URL=$${DATABASE_OWNER_URL:-postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5432/rof12} python3 scripts/seed.py
 
 lint:
 	python3 -m compileall -q app tests scripts

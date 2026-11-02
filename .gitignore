@@ -5,6 +5,12 @@ __pycache__/
 .coverage
 htmlcov/
 .env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+.DS_Store
 dist/
 build/
 *.egg-info/

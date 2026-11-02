@@ -13,7 +13,7 @@ services:
     build: .
     environment:
       MODEL_MODE: mock
-      DATABASE_URL: postgresql+psycopg://rof12_app:rof12_app_dev@postgres:5432/rof12
+      DATABASE_URL: postgresql+psycopg://rof12_app:rof12_app_dev_only@postgres:5432/rof12
       DOCUMENT_STORAGE_ROOT: /var/lib/rof12/documents
     ports:
       - "8000:8000"
