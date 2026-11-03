@@ -8,7 +8,7 @@ Configure `DATABASE_URL` con el pooler de Supabase usando exclusivamente `rof12_
 
 Para Transaction Pooler establezca `DATABASE_PREPARE_THRESHOLD=none`, que hace que Psycopg use `prepare_threshold=None`. Para Session Pooler puede omitirse.
 
-Configure en el entorno de staging: `APP_ENV=staging`, `DATABASE_URL=postgresql+psycopg://rof12_app.<ref>:<password>@<pooler>:6543/postgres`, `DATABASE_OWNER_URL=postgresql+psycopg://rof12_owner.<ref>:<password>@<session-pooler>:5432/postgres`, `DATABASE_PREPARE_THRESHOLD=none`, `JWT_ISSUER=https://<ref>.supabase.co/auth/v1`, `JWT_AUDIENCE=authenticated`, `JWT_ALGORITHM=RS256` y `JWT_PUBLIC_KEY=<injected-from-secret-manager>`.
+Configure en el entorno de staging: `APP_ENV=staging`, `DATABASE_URL=postgresql+psycopg://rof12_app.<ref>:<password>@<pooler>:6543/postgres`, `DATABASE_OWNER_URL=postgresql+psycopg://rof12_owner.<ref>:<password>@<session-pooler>:5432/postgres`, `DATABASE_PREPARE_THRESHOLD=none`, `JWT_ISSUER=https://<ref>.supabase.co/auth/v1`, `JWT_AUDIENCE=authenticated`, `JWT_ALGORITHM=<provider-algorithm>` y `JWT_PUBLIC_KEY=<injected-from-secret-manager>`. El proyecto Supabase de staging verificado en esta sesión publica una clave ES256.
 
 `JWT_PUBLIC_KEY` se inyecta como secreto. El verificador conserva la lista cerrada de claims (`sub`, `iss`, `aud`, `exp`, `iat`); tenant y roles continúan resolviéndose desde la base de datos.
 
@@ -31,3 +31,9 @@ make smoke-staging
 ## Cloudflare
 
 Configure el hostname con TLS **Full (strict)**, WAF administrado y rate limiting por IP/identidad para escritura y `/v1/security/*`. Configure Cloudflare Access delante de `/ui/*` y `/v1/security/*`; el backend sigue validando JWT y rol. Para una demostración temporal puede usarse `cloudflared tunnel --url http://localhost:8000`; nunca se commitea su token.
+
+## Evidencia de reparación Fase 17
+
+El router de tareas persiste cada evaluación del Security Gate mediante `SQLAlchemyAuditRepository` dentro de una transacción con `app.tenant_id` fijado localmente. El smoke acepta `--url` o `STAGING_BASE_URL`, prueba un caso ALLOW y un payload adversarial que produce DENY, y verifica la cadena en PostgreSQL cuando recibe `DATABASE_OWNER_URL`.
+
+Validación remota realizada: Alembic `0008_add_model_usage_request_id`, seed operativo, `audit_events_count=4` con `ALLOW=2`, `DENY=1` y `QUARANTINE=1`; `make check` reportó `82 passed, 1 skipped`. El hostname ngrok no pudo validarse en esta sesión porque el cliente carece de authtoken (`ERR_NGROK_4018`), por lo que `docs/BUILD_STATE.md` conserva `CURRENT_PHASE: 16`.

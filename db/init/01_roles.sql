@@ -1,0 +1,38 @@
+-- ROF12 staging roles. Password placeholders are replaced only in memory at deployment time.
+CREATE SCHEMA IF NOT EXISTS rof12;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'rof12_owner') THEN
+        CREATE ROLE rof12_owner WITH LOGIN PASSWORD '__ROF12_OWNER_PWD__';
+    END IF;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'rof12_app') THEN
+        CREATE ROLE rof12_app WITH LOGIN PASSWORD '__ROF12_APP_PWD__';
+    END IF;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'rof12_executor') THEN
+        CREATE ROLE rof12_executor WITH LOGIN PASSWORD '__ROF12_EXECUTOR_PWD__';
+    END IF;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'rof12_audit') THEN
+        CREATE ROLE rof12_audit WITH LOGIN PASSWORD '__ROF12_AUDIT_PWD__';
+    END IF;
+END
+$$;
+
+ALTER ROLE rof12_owner WITH LOGIN PASSWORD '__ROF12_OWNER_PWD__';
+ALTER ROLE rof12_app WITH LOGIN PASSWORD '__ROF12_APP_PWD__';
+ALTER ROLE rof12_executor WITH LOGIN PASSWORD '__ROF12_EXECUTOR_PWD__';
+ALTER ROLE rof12_audit WITH LOGIN PASSWORD '__ROF12_AUDIT_PWD__';
+
+GRANT ALL ON SCHEMA rof12 TO rof12_owner;
+GRANT USAGE ON SCHEMA rof12 TO rof12_app, rof12_executor, rof12_audit;
+GRANT CONNECT ON DATABASE postgres TO rof12_owner, rof12_app, rof12_executor, rof12_audit;
+GRANT CREATE ON DATABASE postgres TO rof12_owner;
+
+-- DEFAULT_PRIVILEGES_START
+ALTER DEFAULT PRIVILEGES FOR ROLE rof12_owner IN SCHEMA rof12
+    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO rof12_app;
+ALTER DEFAULT PRIVILEGES FOR ROLE rof12_owner IN SCHEMA rof12
+    GRANT SELECT ON TABLES TO rof12_executor;
+ALTER DEFAULT PRIVILEGES FOR ROLE rof12_owner IN SCHEMA rof12
+    GRANT SELECT, INSERT ON TABLES TO rof12_audit;
+
