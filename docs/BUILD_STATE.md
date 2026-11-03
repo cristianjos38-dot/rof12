@@ -1,6 +1,9 @@
 # ROF12 build state
 
-CURRENT_PHASE: 16
+CURRENT_PHASE: 17
+CURRENT_SESSION: 17.9
+LAST_VALIDATED: "Fase 17 completada y validada en vivo: Alembic head aplicado en Supabase, roles RLS verificados, Transaction Pooler confirmado, auditoría transaccional remota validada y smoke_staging.py exitoso vía endpoint público."
+NEXT_ACTION: "Fase 18 - Adaptadores universales de industria o Demostración técnica comparativa."
 
 ## Posicionamiento del núcleo
 
@@ -8,8 +11,8 @@ ROF12 es un Runtime de Ejecución Segura y Freno Universal para Agentes de IA,
 agnóstico a la industria. Los reembolsos son el primer caso demostrable; las
 Capacidades atómicas, Taint Tracking, VerityFlow, Policy Engine Default-Deny,
 Security Gate y Audit Chain son controles universales aplicables también a
-DevOps, Finanzas, Legal y APIs operativas. La preparación de staging de Fase 17
-permanece aislada hasta disponer de credenciales reales de Supabase y Cloudflare.
+DevOps, Finanzas, Legal y APIs operativas. La Fase 17 está validada en vivo
+contra Supabase y el endpoint público ngrok configurado para la demostración.
 
 ## Bootstrap status
 
