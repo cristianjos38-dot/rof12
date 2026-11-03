@@ -66,12 +66,11 @@ def main() -> int:
     print("authenticated benign flow: ok; malicious payload rejected: ok")
     if args.audit_database_url:
         audit_url = args.audit_database_url.replace("+psycopg", "")
-        with psycopg.connect(audit_url) as connection:
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT count(*) FROM rof12.audit_events")
-                count = cursor.fetchone()[0]
-                cursor.execute("SELECT DISTINCT payload->>'decision' FROM rof12.audit_events WHERE event_type = 'SECURITY_GATE_DECISION'")
-                decisions = {row[0] for row in cursor.fetchall()}
+        with psycopg.connect(audit_url) as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT count(*) FROM rof12.audit_events")
+            count = cursor.fetchone()[0]
+            cursor.execute("SELECT DISTINCT payload->>'decision' FROM rof12.audit_events WHERE event_type = 'SECURITY_GATE_DECISION'")
+            decisions = {row[0] for row in cursor.fetchall()}
         if count < 2 or "ALLOW" not in decisions or not ({"DENY", "QUARANTINE"} & decisions):
             print("audit persistence verification failed", file=sys.stderr)
             return 1

@@ -1,4 +1,4 @@
-.PHONY: install test run lint check adversarial smoke-staging db-up db-down migrate seed
+.PHONY: install test run lint check adversarial smoke-staging prep-demo db-up db-down migrate seed
 
 PYTHON ?= python3.11
 
@@ -30,6 +30,9 @@ seed:
 
 smoke-staging:
 	$(PYTHON) scripts/smoke_staging.py
+
+prep-demo:
+	bash scripts/prep_demo.sh
 
 lint:
 	$(PYTHON) -m compileall -q app tests scripts

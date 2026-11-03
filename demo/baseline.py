@@ -15,8 +15,10 @@ def run(fixtures: tuple[DemoFixture, ...]) -> list[dict]:
             "sha256": fixture.sha256,
             "mode": "BASELINE",
             "disposition": "EXECUTED",
+            "decision": "BYPASSED",
             "risk_level": "UNASSESSED",
             "signals": [],
+            "latency_ms": 0.0,
         }
         for fixture in fixtures
     ]
