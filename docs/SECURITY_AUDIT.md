@@ -18,7 +18,7 @@ public template contains placeholders only. `.env.staging` remains ignored.
 | 3. Permit binding | HMAC covers the canonical permit containing agent, tenant, tool, `args_hash`, proposal hash, issue time and expiry. Added tests reject changed agent and tenant. | PASS |
 | 4. Atomic consumption | `CapabilityManager.consume()` uses conditional `UPDATE ... WHERE status='ACTIVE' AND expires_at > :now RETURNING capability_id`; concurrency test and full suite pass. | PASS |
 | 5. Human approval | `HoldManager` restricts resolution to `approver`, `admin`, or `security_admin`; revalidates before approval. Hold state now records `approver_id` and justification. | PASS |
-| 6. Tenant isolation | 15 tenant-aware tables have RLS enabled and 15 policies use `current_setting('app.tenant_id', true)`. A runtime cross-tenant probe as `rof12_app` was not executable because Supabase rejected `SET ROLE` from the configured `postgres` session; direct app-role credentials are required for a full operational RLS test. | SCHEMA PASS; runtime probe PENDING |
+| 6. Tenant isolation | 15 tenant-aware tables have RLS enabled and 15 policies use `current_setting('app.tenant_id', true)`. Live Supabase probe executed as `rof12_app` with session tenant `tenant_002`; querying `tenant_001` returned 0 rows. | PASS |
 | 7. Dependencies | `pip-audit` reported no known vulnerabilities. It also reported the local editable project `rof12` is not a PyPI package, which is expected and not a third-party vulnerability. | PASS |
 
 ## Verification commands
@@ -30,8 +30,7 @@ public template contains placeholders only. `.env.staging` remains ignored.
 - Supabase audit chain: 76/76 links and hashes valid.
 - API isolation test: `tests/security/test_rls_isolation.py` passes for two
   server-resolved tenant contexts; Tenant B receives 404 for Tenant A task and
-  audit resources. This is HTTP isolation evidence, not a substitute for the
-  pending direct `rof12_app` PostgreSQL RLS probe.
+  audit resources. The direct PostgreSQL `rof12_app` probe now also passes.
 
 ## Recording runner
 
