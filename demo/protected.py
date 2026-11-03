@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from app.api.dependencies import AuthContext
 from app.perception.file_validator import validate_artifact
 from app.perception.ingestion import receive_stream
@@ -12,6 +14,7 @@ def run(fixtures: tuple[DemoFixture, ...]) -> list[dict]:
     context = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")
     results = []
     for fixture in fixtures:
+        started = time.perf_counter()
         with fixture.path.open("rb") as stream:
             artifact = receive_stream(context, fixture.path.name, stream)
         validate_artifact(artifact)
@@ -32,6 +35,7 @@ def run(fixtures: tuple[DemoFixture, ...]) -> list[dict]:
                 "disposition": disposition,
                 "risk_level": risk_level,
                 "signals": signals,
+                "latency_ms": round((time.perf_counter() - started) * 1000, 3),
             }
         )
     return results

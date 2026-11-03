@@ -37,6 +37,7 @@ contra Supabase y el endpoint público ngrok configurado para la demostración.
 Fase 15 validation evidence: adversarial suite `13 passed`; full suite `79 passed, 1 skipped`; Ruff and Pyright report zero errors; `pip-audit .` reports no known vulnerabilities under Python 3.11. The skipped resilience check requires a live PostgreSQL Docker environment.
 Fase 16 validation evidence: Docker Compose built and started, Alembic reached head, the seven-fixture replay was persisted/read from PostgreSQL, `/health/ready` returned `database=ok`, and the live PostgreSQL reconnection test passed. The clean-clone README flow is reproducible with Python 3.11+.
 Fase 18.1 validation evidence: the formatted seven-fixture replay ran against Supabase, `scripts/prep_demo.sh` seeded idempotently, `/health/ready` reported `database=ok`, and the authenticated dashboard responded at `/ui/`. Docker was unavailable in the current host session.
+Pre-recording benchmark evidence: 14 rows evaluated in `3223.487 ms`; Protected mean latency was `1.827 ms`, with `1/7` hostile fixtures quarantined (`14.3%` detection). The audit chain remained SHA-256 consistent. Recording readiness is blocked until the remaining adversarial fixtures produce the required DENY/QUARANTINE outcomes.
 
 All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap. The supported runtime is Python 3.11+.
 

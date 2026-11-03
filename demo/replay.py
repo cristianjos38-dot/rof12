@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 from uuid import uuid4
 
 from sqlalchemy import create_engine, text
@@ -20,6 +21,7 @@ CREATE TABLE IF NOT EXISTS rof12.demo_results (
     disposition TEXT NOT NULL,
     risk_level TEXT NOT NULL,
     signals JSONB NOT NULL DEFAULT '[]'::jsonb,
+    latency_ms NUMERIC(12, 3) NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (run_id, fixture_id, mode)
 )
@@ -30,18 +32,19 @@ def persist_and_read(rows: list[dict], database_url: str, run_id: str) -> list[d
     engine = create_engine(database_url, pool_pre_ping=True)
     with engine.begin() as connection:
         connection.execute(text(CREATE_RESULTS))
+        connection.execute(text("ALTER TABLE rof12.demo_results ADD COLUMN IF NOT EXISTS latency_ms NUMERIC(12, 3) NOT NULL DEFAULT 0"))
         for row in rows:
             connection.execute(
                 text("""
                     INSERT INTO rof12.demo_results
-                        (run_id, fixture_id, sha256, mode, disposition, risk_level, signals)
-                    VALUES (:run_id, :fixture_id, :sha256, :mode, :disposition, :risk_level, CAST(:signals AS jsonb))
+                        (run_id, fixture_id, sha256, mode, disposition, risk_level, signals, latency_ms)
+                    VALUES (:run_id, :fixture_id, :sha256, :mode, :disposition, :risk_level, CAST(:signals AS jsonb), :latency_ms)
                 """),
                 {**row, "run_id": run_id, "signals": json.dumps(row["signals"])},
             )
         result = connection.execute(
             text("""
-                SELECT fixture_id, sha256, mode, disposition, risk_level, signals
+                SELECT fixture_id, sha256, mode, disposition, risk_level, signals, latency_ms
                 FROM rof12.demo_results
                 WHERE run_id = :run_id
                 ORDER BY fixture_id, mode
@@ -60,7 +63,7 @@ def print_recording_table(rows: list[dict], run_id: str) -> None:
             "[PROTECTED: BLOCKED]" if row["disposition"] == "QUARANTINED" else "[PROTECTED: REVIEWED]"
         )
         signals = ",".join(row["signals"]) if row["signals"] else "-"
-        print(f"{label:<24} {row['fixture_id']:<24} disposition={row['disposition']:<11} risk={row['risk_level']:<8} signals={signals}")
+        print(f"{label:<24} {row['fixture_id']:<24} disposition={row['disposition']:<11} risk={row['risk_level']:<8} latency={row['latency_ms']}ms signals={signals}")
     print("=" * 96)
     print("Resultados persistidos y leídos desde rof12.demo_results")
 
@@ -73,11 +76,12 @@ def main() -> None:
     args = parser.parse_args()
     if not args.database_url:
         raise SystemExit("DEMO_DATABASE_URL or DATABASE_OWNER_URL is required")
+    started = time.perf_counter()
     fixtures = load_fixtures()
     rows = run_baseline(fixtures) + run_protected(fixtures)
     persisted = persist_and_read(rows, args.database_url, args.run_id)
     if args.json:
-        print(json.dumps(persisted, default=str, indent=2))
+        print(json.dumps({"run_id": args.run_id, "total_elapsed_ms": round((time.perf_counter() - started) * 1000, 3), "results": persisted}, default=str, indent=2))
     else:
         print_recording_table(persisted, args.run_id)
 
