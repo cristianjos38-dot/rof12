@@ -34,6 +34,23 @@ El `perception-worker` está configurado con aislamiento Docker; su ejecución e
 
 ## Instalación y demo local
 
+### Instalación directa desde Git
+
+```bash
+python3.11 -m pip install git+https://github.com/cristianjos38-dot/rof12.git
+```
+
+Uso como librería standalone (sin PostgreSQL ni APIs externas):
+
+```bash
+python3.11 examples/quickstart.py
+# $45.00: ALLOW
+# $1850.00: DENY
+```
+
+El paquete `rof12-demo/` es un arnés independiente de demostración; sus PDFs
+se regeneran localmente y no se publican como artefactos volátiles.
+
 ```bash
 cp .env.example .env
 mkdir -p secrets
@@ -46,6 +63,28 @@ curl -fsS localhost:8000/health/ready
 ```
 
 La API queda disponible en `http://localhost:8000`; `/health/ready` solo responde correctamente cuando PostgreSQL está disponible. El endpoint protegido de demostración es `GET /tasks/context` y requiere Bearer JWT más `X-Tenant-ID`.
+
+El servicio HTTP expone la evaluación protegida mediante `POST /v1/evaluate`
+(también disponible como `POST /v1/tasks`; el payload declara únicamente la
+tarea y sus datos; identidad, tenant y rol se resuelven en servidor). El arranque sin `DATABASE_URL` conserva el fallback de
+configuración a PostgreSQL local `rof12_app` para desarrollo; las pruebas usan
+`MODEL_MODE=mock` y no requieren APIs externas.
+
+### Acceso al dashboard local
+
+El dashboard no tiene credenciales universales `admin/admin`: la autenticación
+siempre valida JWT y membresía activa en PostgreSQL. Para laboratorio, genera
+un token temporal sin claims de tenant ni roles y abre:
+
+```bash
+export DEMO_JWT="$(python3.11 scripts/dev_token.py user_001)"
+curl -H "Authorization: Bearer $DEMO_JWT" -H "X-Tenant-ID: tenant_001" \
+  http://127.0.0.1:8000/ui/
+```
+
+La URL visual es `http://127.0.0.1:8000/ui/`; requiere que PostgreSQL esté
+sembrado con `user_001`/`tenant_001`. El panel muestra holds, artefactos,
+estado de seguridad y eventos disponibles para ese tenant.
 
 Para ejecutar el replay comparativo con los mismos siete fixtures y registrar la tabla en PostgreSQL:
 

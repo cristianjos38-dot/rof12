@@ -20,6 +20,7 @@ from app.security.security_gate import SecurityGate
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 v1_router = APIRouter(prefix="/v1/tasks", tags=["tasks"])
+evaluate_router = APIRouter(prefix="/v1/evaluate", tags=["evaluation"])
 
 
 class TaskRequest(BaseModel):
@@ -84,6 +85,12 @@ def create_task(request: Request, payload: TaskRequest, context: AuthContext = D
     with api_state.lock:
         api_state.tasks[(context.tenant_id, task_id)] = {"task_id": task_id, "tenant_id": context.tenant_id, "status": "CREATED", "task_type": payload.task_type, "payload": payload.payload, "artifacts": []}
     return api_state.tasks[(context.tenant_id, task_id)]
+
+
+@evaluate_router.post("")
+def evaluate(request: Request, payload: TaskRequest, context: AuthContext = Depends(get_auth_context)):
+    """Stable evaluation alias; authority remains resolved by the server."""
+    return create_task(request, payload, context)
 
 
 @v1_router.get("/{task_id}")

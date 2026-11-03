@@ -3,11 +3,12 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["app*", "demo*"]
+where = [".", "rof12-demo"]
+include = ["app*", "rof12*"]
 
 [project]
 name = "rof12"
-version = "0.1.0"
+version = "1.0.0"
 description = "ROF12 default-deny autonomous refund workflow"
 requires-python = ">=3.11"
 dependencies = [

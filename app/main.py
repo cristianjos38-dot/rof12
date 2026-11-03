@@ -21,7 +21,7 @@ from app.api.routes.health import router as health_router
 from app.api.routes.holds import router as holds_router
 from app.api.routes.security import router as security_router
 from app.api.routes.tasks import router as tasks_router
-from app.api.routes.tasks import v1_router as v1_tasks_router
+from app.api.routes.tasks import evaluate_router, v1_router as v1_tasks_router
 from app.ui.routes import router as ui_router
 
 app = FastAPI(title="ROF12", version="0.1.0")
@@ -34,6 +34,7 @@ app.add_exception_handler(ApiDomainError, domain_exception_handler)  # type: ign
 app.include_router(health_router)
 app.include_router(tasks_router)
 app.include_router(v1_tasks_router)
+app.include_router(evaluate_router)
 app.include_router(documents_router)
 app.include_router(artifacts_router)
 app.include_router(holds_router)
