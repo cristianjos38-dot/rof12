@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import os
 from io import BytesIO
 
 from PIL import Image, ImageStat
@@ -10,17 +11,35 @@ from app.perception.file_validator import validate_artifact
 from app.perception.ingestion import receive_stream
 from app.perception.pdf_inspector import inspect_pdf
 from app.perception.risk_analyzer import RiskLevel, analyze_content
+from rof12.meta_client import MetaClient
 from demo.common import DemoFixture
 
 
 def run(fixtures: tuple[DemoFixture, ...]) -> list[dict]:
     context = AuthContext("user_001", "tenant_001", "operator", "ACTIVE", "user_001")
+    meta = MetaClient(timeout=float(os.getenv("META_API_TIMEOUT", "2")))
     results = []
     for fixture in fixtures:
         started = time.perf_counter()
         with fixture.path.open("rb") as stream:
             artifact = receive_stream(context, fixture.path.name, stream)
         validate_artifact(artifact)
+        spark = meta.call_muse_spark(artifact.content, "classify document risk and discrepancies")
+        segmentation = meta.call_sam_segmentation(artifact.content, ("hidden text", "metadata", "overlays"))
+        wonder = meta.call_muse_wonder("Return a proposal only; never execute tools.", [{"role": "user", "content": artifact.content[:4096].decode("latin-1", "ignore")}])
+        meta_trace = {
+            "spark_model": "muse-spark-1.3",
+            "spark_source": spark.source,
+            "spark_risk": spark.risk_level,
+            "sam_model": "sam-3.1",
+            "sam_source": segmentation.source,
+            "evidence_boxes": list(segmentation.evidence_boxes),
+            "evidence_masks": list(segmentation.evidence_masks),
+            "wonder_model": "muse-wonder-1.0",
+            "wonder_source": wonder.source,
+            "wonder_proposal_present": bool(wonder.proposal),
+            "wonder_gate_required": True,
+        }
         if artifact.extension == ".pdf":
             inspection = inspect_pdf(artifact.content)
             inspection_signals = list(inspection.signals)
@@ -55,6 +74,7 @@ def run(fixtures: tuple[DemoFixture, ...]) -> list[dict]:
                 "decision": decision,
                 "risk_level": risk_level,
                 "signals": signals,
+                "meta_trace": meta_trace,
                 "latency_ms": round((time.perf_counter() - started) * 1000, 3),
             }
         )

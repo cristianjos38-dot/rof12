@@ -134,8 +134,8 @@ Si falta `META_API_KEY`, el modo no es `live` o la llamada falla, el cliente
 usa el fallback determinista local. No se imprimen ni persisten claves. Las
 salidas de Wonder nunca ejecutan herramientas directamente: se convierten en
 `Proposal` y pasan por `SecurityGate.evaluate()`. Las señales de Spark y la
-segmentación de SAM se registran como evidencia de auditoría cuando el
-documento queda en cuarentena.
+segmentación de SAM se registran como `meta_trace` en `demo_results` y como
+evidencia de auditoría cuando el documento queda en cuarentena.
 
 ## Verificación rápida para jueces
 

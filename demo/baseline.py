@@ -18,6 +18,7 @@ def run(fixtures: tuple[DemoFixture, ...]) -> list[dict]:
             "decision": "BYPASSED",
             "risk_level": "UNASSESSED",
             "signals": [],
+            "meta_trace": {},
             "latency_ms": 0.0,
         }
         for fixture in fixtures

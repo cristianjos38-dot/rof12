@@ -17,8 +17,9 @@ Live adapter validation: the configured responses endpoint was exercised with
 usable model response in this environment, so all three adapters safely used
 their deterministic fallbacks: Spark classified the adversarial document as
 `CRITICAL`, SAM emitted `<|box;...|>` and `<|mask;...|>`, and Wonder produced a
-proposal that remained subject to the Gate. Supabase benchmark persistence was
-not run in this session because `.env.staging` did not contain database URLs.
+proposal that remained subject to the Gate. The staging replay persisted 14
+rows and 7 decision events with all three model identifiers and `meta_trace`.
+The Supabase audit chain verified SHA-256 links across 76 events.
 
 ## Posicionamiento del núcleo
 

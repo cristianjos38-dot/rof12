@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS rof12.demo_results (
     decision TEXT NOT NULL DEFAULT 'ALLOW',
     risk_level TEXT NOT NULL,
     signals JSONB NOT NULL DEFAULT '[]'::jsonb,
+    meta_trace JSONB NOT NULL DEFAULT '{}'::jsonb,
     latency_ms NUMERIC(12, 3) NOT NULL DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     PRIMARY KEY (run_id, fixture_id, mode)
@@ -36,14 +37,15 @@ def persist_and_read(rows: list[dict], database_url: str, run_id: str) -> list[d
         connection.execute(text(CREATE_RESULTS))
         connection.execute(text("ALTER TABLE rof12.demo_results ADD COLUMN IF NOT EXISTS latency_ms NUMERIC(12, 3) NOT NULL DEFAULT 0"))
         connection.execute(text("ALTER TABLE rof12.demo_results ADD COLUMN IF NOT EXISTS decision TEXT NOT NULL DEFAULT 'ALLOW'"))
+        connection.execute(text("ALTER TABLE rof12.demo_results ADD COLUMN IF NOT EXISTS meta_trace JSONB NOT NULL DEFAULT '{}'::jsonb"))
         for row in rows:
             connection.execute(
                 text("""
                     INSERT INTO rof12.demo_results
-                        (run_id, fixture_id, sha256, mode, disposition, decision, risk_level, signals, latency_ms)
-                    VALUES (:run_id, :fixture_id, :sha256, :mode, :disposition, :decision, :risk_level, CAST(:signals AS jsonb), :latency_ms)
+                        (run_id, fixture_id, sha256, mode, disposition, decision, risk_level, signals, meta_trace, latency_ms)
+                    VALUES (:run_id, :fixture_id, :sha256, :mode, :disposition, :decision, :risk_level, CAST(:signals AS jsonb), CAST(:meta_trace AS jsonb), :latency_ms)
                 """),
-                {**row, "run_id": run_id, "signals": json.dumps(row["signals"])},
+                {**row, "run_id": run_id, "signals": json.dumps(row["signals"]), "meta_trace": json.dumps(row["meta_trace"])},
             )
             if row["mode"] == "PROTECTED":
                 SQLAlchemyAuditRepository(connection).append(
@@ -57,6 +59,7 @@ def persist_and_read(rows: list[dict], database_url: str, run_id: str) -> list[d
                         "decision": row["decision"],
                         "risk_level": row["risk_level"],
                         "content_sha256": row["sha256"],
+                        "meta_trace": row["meta_trace"],
                     },
                 )
         result = connection.execute(
