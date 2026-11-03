@@ -17,3 +17,4 @@ build/
 rof12-demo/out/
 rof12-demo/assets/*.pdf
 
+.env.staging

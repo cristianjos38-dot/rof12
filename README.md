@@ -127,6 +127,7 @@ propuestas). Se configuran únicamente por entorno:
 export MODEL_MODE=live
 export META_API_KEY='<inyectar-desde-un-secret-manager>'
 export META_API_BASE_URL='https://api.meta.com/v1'
+export META_API_RESPONSES_URL='https://api.meta.com/v1/responses'
 ```
 
 Si falta `META_API_KEY`, el modo no es `live` o la llamada falla, el cliente

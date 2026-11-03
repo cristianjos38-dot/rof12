@@ -46,6 +46,7 @@ class MetaClient:
     def __init__(self, api_key: str | None = None, base_url: str | None = None, timeout: float = 8.0):
         self.api_key = api_key or os.getenv("META_API_KEY", "")
         self.base_url = (base_url or os.getenv("META_API_BASE_URL", "https://api.meta.com/v1")).rstrip("/")
+        self.responses_url = os.getenv("META_API_RESPONSES_URL", f"{self.base_url}/responses")
         self.timeout = timeout
 
     def call_muse_spark(self, document_bytes: bytes, prompt: str) -> SparkResult:
@@ -78,8 +79,8 @@ class MetaClient:
         if not self.api_key or os.getenv("MODEL_MODE", "mock") != "live":
             return None
         request = urllib.request.Request(
-            f"{self.base_url}/models/{model}",
-            data=json.dumps(payload).encode(),
+            self.responses_url,
+            data=json.dumps({"model": model, "input": payload}).encode(),
             headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
         )
         try:

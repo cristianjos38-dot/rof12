@@ -12,6 +12,14 @@ automatic fallback when the key or network is unavailable. Wonder output is
 always reduced to a proposal and evaluated by the Security Gate; Spark/SAM
 evidence is appended to quarantine audit records.
 
+Live adapter validation: the configured responses endpoint was exercised with
+`MODEL_MODE=live` without printing the key. The provider did not return a
+usable model response in this environment, so all three adapters safely used
+their deterministic fallbacks: Spark classified the adversarial document as
+`CRITICAL`, SAM emitted `<|box;...|>` and `<|mask;...|>`, and Wonder produced a
+proposal that remained subject to the Gate. Supabase benchmark persistence was
+not run in this session because `.env.staging` did not contain database URLs.
+
 ## Posicionamiento del núcleo
 
 ROF12 es un Runtime de Ejecución Segura y Freno Universal para Agentes de IA,
