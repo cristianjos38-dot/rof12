@@ -2,7 +2,13 @@
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
 
-from app.config import JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER, JWT_PUBLIC_KEY, JWT_SECRET
+from app.config import (
+    JWT_ALGORITHM,
+    JWT_AUDIENCE,
+    JWT_ISSUER,
+    JWT_PUBLIC_KEY,
+    JWT_SECRET,
+)
 
 ALLOWED_CLAIMS = frozenset({"sub", "iss", "aud", "exp", "iat"})
 
