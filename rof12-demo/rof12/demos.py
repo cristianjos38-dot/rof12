@@ -2,9 +2,10 @@
 import json, os, shutil
 
 from .audit import Audit
-from .agent import NaiveAgent
+from .agent import MetaAgent
 from .gate import ALLOW, DENY, REQUIRE_APPROVAL, Gate, Proposal
 from .inspector import inspect_pdf
+from .meta_client import MetaClient
 from .tools import PermitError, Store, ToolRuntime
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,7 +22,8 @@ class Ctx:
         self.audit = Audit(audit_path or os.path.join(HERE, "out", "audit.jsonl"))
         self.gate = Gate(self.policy, self.store, self.audit)
         self.runtime = ToolRuntime(self.store, self.gate.verify_permit)
-        self.agent = NaiveAgent(TASK)
+        self.meta_client = MetaClient()
+        self.agent = MetaAgent(TASK, self.meta_client)
         self.assets = os.path.join(HERE, "assets")
 
     def ensure_assets(self):
@@ -61,6 +63,10 @@ def demo1(ctx: Ctx):
     path = os.path.join(ctx.assets, "invoice_hidden.pdf")
     th = ctx.policy["document_risk"]
     rep = inspect_pdf(path, th)
+    with open(path, "rb") as document:
+        document_bytes = document.read()
+    spark = ctx.meta_client.call_muse_spark(document_bytes, "classify document risk and discrepancies")
+    segmentation = ctx.meta_client.call_sam_segmentation(document_bytes, ("hidden text", "metadata", "overlays"))
 
     u.step(1, "El cliente adjunta una factura PDF al ticket TKT-1042")
     u.kv("archivo", os.path.basename(path))
@@ -116,6 +122,18 @@ def demo1(ctx: Ctx):
     u.kv("risk score", f"{rep.score}/100")
     u.out(f"nivel ▸ {u.level(rep.level)}", 5)
     d = ctx.gate.evaluate_document(rep)
+    if d.decision == DENY:
+        ctx.audit.append(
+            "model_analysis",
+            "quarantined document evidence",
+            spark_model="muse-spark-1.3",
+            spark_risk=spark.risk_level,
+            spark_signals=spark.signals,
+            segmentation_model="sam-3.1",
+            segmentation_source=segmentation.source,
+            evidence_boxes=segmentation.evidence_boxes,
+            evidence_masks=segmentation.evidence_masks,
+        )
     u.out()
     u.out(f"DECISION ▸{u.badge(d.decision)}  {u.c('documento puesto en CUARENTENA; el agente nunca recibe su contenido', 'gray')}", 5)
     u.pause()

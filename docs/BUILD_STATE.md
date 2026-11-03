@@ -5,6 +5,13 @@ CURRENT_SESSION: 18.4
 LAST_VALIDATED: "Fase 18 completada: Eficacia adversarial al 100% (6/6 bloqueados), 0 falsos positivos (1/1 benigno permitido), latencia de ~3.6ms, persistencia transaccional y SHA-256 verificado en Supabase. Sistema en master listo para grabación."
 NEXT_ACTION: "Grabación de video técnico de demostración (3 minutos)."
 
+Optional Meta adapters: `muse-spark-1.3`, `sam-3.1`, and `muse-wonder-1.0`
+are available through `rof12.meta_client`. Live calls require injected
+`META_API_KEY` and `MODEL_MODE=live`; CI and demos remain deterministic with
+automatic fallback when the key or network is unavailable. Wonder output is
+always reduced to a proposal and evaluated by the Security Gate; Spark/SAM
+evidence is appended to quarantine audit records.
+
 ## Posicionamiento del núcleo
 
 ROF12 es un Runtime de Ejecución Segura y Freno Universal para Agentes de IA,

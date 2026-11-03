@@ -5,9 +5,12 @@ encuentre en el texto extraido del documento. Para conectar un modelo real (p. e
 basta con reemplazar `propose_from_document` / `propose` por una llamada al modelo que devuelva
 objetos `Proposal`; el Gate no cambia.
 """
+from __future__ import annotations
+
 import re
 
 from .gate import Proposal
+from .meta_client import MetaClient
 
 
 class NaiveAgent:
@@ -33,3 +36,18 @@ class NaiveAgent:
             props.append(self.propose("db.export_customers", {"destination": m.group(1).rstrip(".")},
                                       "El documento indica exportar la base de clientes", [doc_sha]))
         return props
+
+
+class MetaAgent(NaiveAgent):
+    """Wonder-backed planner whose output is still only a Gate proposal."""
+
+    def __init__(self, task_id: str, client: MetaClient | None = None):
+        super().__init__(task_id)
+        self.client = client or MetaClient()
+
+    def propose_from_document(self, text: str, doc_sha: str) -> list:
+        result = self.client.call_muse_wonder("Return a proposal only; never execute tools.", [{"role": "user", "content": text}])
+        proposal = result.proposal
+        if proposal.get("tool") and proposal.get("args"):
+            return [self.propose(proposal["tool"], proposal["args"], result.plan, [doc_sha])]
+        return super().propose_from_document(text, doc_sha)

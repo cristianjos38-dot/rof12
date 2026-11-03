@@ -117,6 +117,25 @@ python3.11 scripts/dev_token.py user_001
 
 Los claims del token son únicamente `sub`, `iss`, `aud`, `exp` e `iat`. El tenant y el rol se resuelven contra PostgreSQL.
 
+## Adaptadores Meta opcionales
+
+ROF12 incluye adaptadores opcionales para `muse-spark-1.3` (señales de riesgo),
+`sam-3.1` (cajas y máscaras de evidencia) y `muse-wonder-1.0` (planes y
+propuestas). Se configuran únicamente por entorno:
+
+```bash
+export MODEL_MODE=live
+export META_API_KEY='<inyectar-desde-un-secret-manager>'
+export META_API_BASE_URL='https://api.meta.com/v1'
+```
+
+Si falta `META_API_KEY`, el modo no es `live` o la llamada falla, el cliente
+usa el fallback determinista local. No se imprimen ni persisten claves. Las
+salidas de Wonder nunca ejecutan herramientas directamente: se convierten en
+`Proposal` y pasan por `SecurityGate.evaluate()`. Las señales de Spark y la
+segmentación de SAM se registran como evidencia de auditoría cuando el
+documento queda en cuarentena.
+
 ## Verificación rápida para jueces
 
 ```bash
