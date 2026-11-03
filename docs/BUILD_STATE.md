@@ -1,9 +1,9 @@
 # ROF12 build state
 
-CURRENT_PHASE: 17
-CURRENT_SESSION: 17.9
-LAST_VALIDATED: "Fase 17 completada y validada en vivo: Alembic head aplicado en Supabase, roles RLS verificados, Transaction Pooler confirmado, auditoría transaccional remota validada y smoke_staging.py exitoso vía endpoint público."
-NEXT_ACTION: "Fase 18 - Adaptadores universales de industria o Demostración técnica comparativa."
+CURRENT_PHASE: 18
+CURRENT_SESSION: 18.1
+LAST_VALIDATED: "Fase 17 cerrada en master. Iniciando preparación del arnés de demostración y vistas de auditoría."
+NEXT_ACTION: "Verificar ejecución limpia de run_demonstration.py y disponibilidad del dashboard UI."
 
 ## Posicionamiento del núcleo
 
@@ -36,6 +36,7 @@ contra Supabase y el endpoint público ngrok configurado para la demostración.
 
 Fase 15 validation evidence: adversarial suite `13 passed`; full suite `79 passed, 1 skipped`; Ruff and Pyright report zero errors; `pip-audit .` reports no known vulnerabilities under Python 3.11. The skipped resilience check requires a live PostgreSQL Docker environment.
 Fase 16 validation evidence: Docker Compose built and started, Alembic reached head, the seven-fixture replay was persisted/read from PostgreSQL, `/health/ready` returned `database=ok`, and the live PostgreSQL reconnection test passed. The clean-clone README flow is reproducible with Python 3.11+.
+Fase 18.1 validation evidence: the formatted seven-fixture replay ran against Supabase, `scripts/prep_demo.sh` seeded idempotently, `/health/ready` reported `database=ok`, and the authenticated dashboard responded at `/ui/`. Docker was unavailable in the current host session.
 
 All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap. The supported runtime is Python 3.11+.
 

@@ -54,6 +54,20 @@ DATABASE_OWNER_URL=postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localho
   python3.11 -m demo.replay
 ```
 
+Para preparar una grabación con seed idempotente, healthcheck, UI autenticada y
+salida legible Baseline vs Protected:
+
+```bash
+export DATABASE_OWNER_URL='<owner pooler URL>'
+export DATABASE_URL='<app transaction-pooler URL>'
+export DEMO_JWT="$(python3.11 scripts/dev_token.py user_001)"
+make prep-demo
+```
+
+Use `python3.11 demo/run_demonstration.py --json` cuando se necesite salida
+machine-readable; el modo predeterminado muestra `[BASELINE: VULNERABLE]` y
+`[PROTECTED: BLOCKED]` para la grabación.
+
 El modo Baseline usa únicamente un almacén ficticio en memoria y no importa `app`, no lee secretos ROF12 ni accede a rutas de almacenamiento protegidas. El modo Protected usa la percepción local de ROF12. La salida se consulta después de insertar y leer `rof12.demo_results`; no contiene resultados codificados manualmente.
 
 Para generar un token de laboratorio:
