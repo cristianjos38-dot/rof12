@@ -28,6 +28,7 @@ class Proposal:
     args: dict
     rationale: str = ""
     derived_from: list = field(default_factory=list)  # sha256 de documentos que influyeron
+    tenant_id: str = "tenant_001"
 
     @property
     def hash(self) -> str:
@@ -63,7 +64,7 @@ class Gate:
     def _sign(self, permit: dict) -> str:
         return hmac.new(self._secret, canon(permit).encode(), hashlib.sha256).hexdigest()
 
-    def verify_permit(self, permit: dict, tool: str, args: dict):
+    def verify_permit(self, permit: dict, tool: str, args: dict, agent: str | None = None, tenant_id: str | None = None):
         body = {k: v for k, v in permit.items() if k != "sig"}
         if not hmac.compare_digest(self._sign(body), permit.get("sig", "")):
             raise PermitError("PERMIT_BAD_SIGNATURE", "permit alterado o no emitido por el gate")
@@ -73,11 +74,16 @@ class Gate:
             raise PermitError("PERMIT_TOOL_MISMATCH", f"{permit['tool']} != {tool}")
         if permit["args_hash"] != sha(args):
             raise PermitError("PERMIT_ARGS_MISMATCH", "los argumentos no coinciden con los autorizados")
+        if agent is not None and permit["agent"] != agent:
+            raise PermitError("PERMIT_AGENT_MISMATCH")
+        if tenant_id is not None and permit["tenant_id"] != tenant_id:
+            raise PermitError("PERMIT_TENANT_MISMATCH")
 
     def _issue_permit(self, p: Proposal, via_hold: str | None = None) -> dict:
         now = time.time()
         permit = {"permit_id": "PRM-" + secrets.token_hex(4).upper(), "task_id": p.task_id,
                   "agent": p.agent, "tool": p.tool, "args_hash": sha(p.args),
+                  "tenant_id": p.tenant_id,
                   "proposal_hash": p.hash, "issued_at": round(now, 3),
                   "expires_at": round(now + self.policy["permit"]["ttl_seconds"], 3),
                   "uses": 1, "via_hold": via_hold}
@@ -248,7 +254,7 @@ class Gate:
     # ------------------------------------------------------------------ ejecucion
     def execute(self, runtime, p: Proposal, permit: dict | None):
         try:
-            result = runtime.call(p.tool, p.args, permit)
+            result = runtime.call(p.tool, p.args, permit, agent=p.agent, tenant_id=p.tenant_id)
         except PermitError as e:
             self.audit.append("execution_blocked", f"{p.tool} bloqueado: {e.code}",
                               tool=p.tool, args=p.args, code=e.code, detail=e.detail)

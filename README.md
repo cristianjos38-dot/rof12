@@ -32,6 +32,17 @@ El `perception-worker` está configurado con aislamiento Docker; su ejecución e
 - Python 3.11+ (Docker usa Python 3.12).
 - PostgreSQL 16 mediante Docker Compose.
 
+Para una instalación de terceros, empieza desde la plantilla pública:
+
+```bash
+cp .env.example .env
+python3.11 -m pip install -e '.[dev]'
+```
+
+Provisiona PostgreSQL local con `docker compose up -d --build`, aplica
+`alembic upgrade head` y ejecuta `make seed`. Nunca copies credenciales reales
+al repositorio; usa un gestor de secretos o variables de entorno.
+
 ## Instalación y demo local
 
 ### Instalación directa desde Git

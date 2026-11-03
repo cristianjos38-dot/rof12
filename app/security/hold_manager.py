@@ -23,6 +23,8 @@ class Hold:
     created_by: str
     expires_at: datetime
     status: HoldStatus = HoldStatus.OPEN
+    approver_id: str | None = None
+    justification: str = ""
 
 
 class HoldManager:
@@ -35,7 +37,7 @@ class HoldManager:
         self.holds[hold.hold_id] = hold
         return hold
 
-    def resolve(self, hold_id: str, ctx, now: datetime, approve: bool, revalidate: Callable[[], Any]) -> Hold:
+    def resolve(self, hold_id: str, ctx, now: datetime, approve: bool, revalidate: Callable[[], Any], justification: str = "") -> Hold:
         hold = self.holds.get(hold_id)
         if hold is None:
             raise HoldError("hold not found")
@@ -48,10 +50,14 @@ class HoldManager:
             raise HoldError("hold expired")
         if not approve:
             hold.status = HoldStatus.REJECTED
+            hold.approver_id = getattr(ctx, "user_id", None)
+            hold.justification = justification
             return hold
         result = revalidate()
         if getattr(result, "decision", None) is not None and str(getattr(result.decision, "value", result.decision)) != "ALLOW":
             raise HoldError("revalidation did not allow execution")
         hold.status = HoldStatus.APPROVED
+        hold.approver_id = getattr(ctx, "user_id", None)
+        hold.justification = justification
         return hold
 

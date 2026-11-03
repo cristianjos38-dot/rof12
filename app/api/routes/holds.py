@@ -13,6 +13,7 @@ hold_manager = HoldManager()
 class HoldResolution(BaseModel):
     model_config = ConfigDict(extra="forbid")
     approve: bool
+    justification: str = ""
 
 
 @router.get("")
@@ -31,8 +32,8 @@ def get_hold(hold_id: str, context: AuthContext = Depends(get_auth_context)):
 @router.post("/{hold_id}/resolve")
 def resolve_hold(hold_id: str, payload: HoldResolution, context: AuthContext = Depends(get_auth_context)):
     try:
-        hold = hold_manager.resolve(hold_id, context, datetime.now(UTC), payload.approve, lambda: type("Revalidation", (), {"decision": "ALLOW"})())
+        hold = hold_manager.resolve(hold_id, context, datetime.now(UTC), payload.approve, lambda: type("Revalidation", (), {"decision": "ALLOW"})(), payload.justification)
     except HoldError as exc:
         raise HTTPException(409, detail=str(exc)) from exc
-    return {"hold_id": hold.hold_id, "status": hold.status}
+    return {"hold_id": hold.hold_id, "status": hold.status, "approver_id": hold.approver_id, "justification": hold.justification}
 

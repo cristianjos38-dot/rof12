@@ -34,10 +34,10 @@ class ToolRuntime:
         self._verify = verify_permit
         self._used = set()
 
-    def call(self, tool: str, args: dict, permit: dict | None):
+    def call(self, tool: str, args: dict, permit: dict | None, **binding):
         if not permit:
             raise PermitError("NO_PERMIT", "la ejecucion requiere un permit firmado por el gate")
-        self._verify(permit, tool, args)  # firma, expiracion, tool, args_hash
+        self._verify(permit, tool, args, **binding)  # firma, expiracion, identity, args_hash
         if permit["permit_id"] in self._used:
             raise PermitError("PERMIT_ALREADY_USED", f"{permit['permit_id']} es de un solo uso")
         self._used.add(permit["permit_id"])

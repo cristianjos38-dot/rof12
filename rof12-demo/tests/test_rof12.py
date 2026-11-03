@@ -90,6 +90,16 @@ class TestGate(Base):
             self.rt.call(p.tool, p.args, forged)
         self.assertEqual(e.exception.code, "PERMIT_BAD_SIGNATURE")
 
+    def test_permit_bound_to_agent_and_tenant(self):
+        p = refund("ORD-7731", 45.0)
+        d = self.gate.evaluate(p)
+        with self.assertRaises(PermitError) as e:
+            self.gate.verify_permit(d.permit, p.tool, p.args, agent="other-agent", tenant_id=p.tenant_id)
+        self.assertEqual(e.exception.code, "PERMIT_AGENT_MISMATCH")
+        with self.assertRaises(PermitError) as e:
+            self.gate.verify_permit(d.permit, p.tool, p.args, agent=p.agent, tenant_id="tenant_002")
+        self.assertEqual(e.exception.code, "PERMIT_TENANT_MISMATCH")
+
     def test_hold_flow_with_tamper_and_revalidation(self):
         p = refund("ORD-7788", 320.0)
         d = self.gate.evaluate(p)
