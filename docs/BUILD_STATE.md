@@ -1,9 +1,9 @@
 # ROF12 build state
 
 CURRENT_PHASE: 18
-CURRENT_SESSION: 18.1
-LAST_VALIDATED: "Fase 17 cerrada en master. Iniciando preparación del arnés de demostración y vistas de auditoría."
-NEXT_ACTION: "Verificar ejecución limpia de run_demonstration.py y disponibilidad del dashboard UI."
+CURRENT_SESSION: 18.3
+LAST_VALIDATED: "Eficacia adversarial certificada al 100% en vivo contra Supabase. Benchmark generado en demo_benchmark.json. Auditoría criptográfica validada. Entorno completamente listo para grabación."
+NEXT_ACTION: "Grabación de video técnico de demostración (3 minutos)."
 
 ## Posicionamiento del núcleo
 
@@ -37,7 +37,7 @@ contra Supabase y el endpoint público ngrok configurado para la demostración.
 Fase 15 validation evidence: adversarial suite `13 passed`; full suite `79 passed, 1 skipped`; Ruff and Pyright report zero errors; `pip-audit .` reports no known vulnerabilities under Python 3.11. The skipped resilience check requires a live PostgreSQL Docker environment.
 Fase 16 validation evidence: Docker Compose built and started, Alembic reached head, the seven-fixture replay was persisted/read from PostgreSQL, `/health/ready` returned `database=ok`, and the live PostgreSQL reconnection test passed. The clean-clone README flow is reproducible with Python 3.11+.
 Fase 18.1 validation evidence: the formatted seven-fixture replay ran against Supabase, `scripts/prep_demo.sh` seeded idempotently, `/health/ready` reported `database=ok`, and the authenticated dashboard responded at `/ui/`. Docker was unavailable in the current host session.
-Previous pre-recording benchmark evidence is superseded: the first run exposed that the demo did not propagate inspector signals and treated PNG fixtures as low risk. The protected evaluator now produces terminal decisions for the complete corpus: T-01 `ALLOW`, T-02–T-07 `QUARANTINE`. This is 6/6 hostile fixtures blocked (100% adversarial detection) with 0 false positives. A fresh persisted benchmark and audit-chain verification remain pending until `DATABASE_OWNER_URL` is supplied in the execution environment.
+Fase 18.3 live benchmark evidence: Supabase seed completed idempotently, `/health/ready` returned `database=ok`, and `demo_benchmark.json` recorded 14 rows. Protected evaluation produced T-01 `ALLOW` and T-02–T-07 `QUARANTINE`: 6/6 hostile fixtures blocked (100% detection), 0 false positives, and 3.639 ms mean Protected latency. The Supabase audit chain contained 20 events, grouped decisions `ALLOW=5`, `DENY=2`, `QUARANTINE=13`, with SHA-256 links verified end-to-end. Full suite: `83 passed, 1 skipped`; the skipped resilience check requires live Docker PostgreSQL.
 
 All tests are local and use `MODEL_MODE=mock`. External model/API calls are intentionally unavailable in this bootstrap. The supported runtime is Python 3.11+.
 
