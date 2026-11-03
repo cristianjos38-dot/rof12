@@ -1,0 +1,28 @@
+{
+  "version": "2026.11-demo",
+  "tools": {
+    "orders.read":         {"risk": "low",      "side_effects": false},
+    "refunds.create":      {"risk": "high",     "side_effects": true},
+    "email.send_customer": {"risk": "medium",   "side_effects": true},
+    "db.export_customers": {"risk": "critical", "side_effects": true, "never_grant": true},
+    "shell.exec":          {"risk": "critical", "side_effects": true, "never_grant": true}
+  },
+  "refunds": {
+    "currency": "USD",
+    "auto_allow_max": 100.00,
+    "approval_max": 500.00,
+    "max_age_days": 30
+  },
+  "approval": {"hold_ttl_seconds": 900},
+  "permit":   {"ttl_seconds": 300},
+  "document_risk": {"low_max": 19, "medium_max": 44, "high_max": 79},
+  "grants": {
+    "TKT-1042": {
+      "agent": "support-agent-01",
+      "customer_id": "C-204",
+      "allowed_tools": ["orders.read", "refunds.create"],
+      "max_refund": 500.00,
+      "ttl_seconds": 900
+    }
+  }
+}
