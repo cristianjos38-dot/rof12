@@ -24,10 +24,20 @@ public template contains placeholders only. `.env.staging` remains ignored.
 ## Verification commands
 
 - Demo tests: 13 passed, including agent/tenant permit binding.
-- Core suite: 83 passed, 1 skipped; the skip requires live Docker PostgreSQL.
+- Core suite: 85 passed, 1 skipped; the skip requires live Docker PostgreSQL.
 - Standalone demo: `python3.11 rof12-demo/run_demo.py all --fast` passed.
 - Tamper test: detected modified JSONL hash chain.
 - Supabase audit chain: 76/76 links and hashes valid.
+- API isolation test: `tests/security/test_rls_isolation.py` passes for two
+  server-resolved tenant contexts; Tenant B receives 404 for Tenant A task and
+  audit resources. This is HTTP isolation evidence, not a substitute for the
+  pending direct `rof12_app` PostgreSQL RLS probe.
+
+## Recording runner
+
+Use `python3.11 demo/run_video_demo.py --interactive` for the seven-case
+screen recording. It pauses 1.5 seconds by default, prints the model sources,
+Gate decision, SHA-256, and whether the persisted replay can confirm the hash.
 
 ## Secret hygiene notes
 
