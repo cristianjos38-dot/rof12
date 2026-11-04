@@ -16,5 +16,6 @@ build/
 *.egg-info/
 rof12-demo/out/
 rof12-demo/assets/*.pdf
+artifacts/meta_live_trace.json
 
 .env.staging

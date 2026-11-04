@@ -22,9 +22,9 @@ ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autorida
 | F13 | Completada | API FastAPI v1, observabilidad, rate limiting y administración de seguridad |
 | F14 | Completada | Panel server-rendered seguro con Jinja2, HTMX local y aislamiento por tenant |
 | F15 | Completada | Laboratorio adversarial, cobertura T-01–T-11 y quality gates reproducibles |
-| F16 | En congelación | Replay Baseline vs Protected, arranque Docker limpio y entrega reproducible |
+| F16 | Completada | Replay Baseline vs Protected, arranque Docker limpio y entrega reproducible |
 
-El `perception-worker` está configurado con aislamiento Docker; su ejecución en un daemon Docker real sigue pendiente de validación en este entorno.
+La percepción documental se ejecuta in-process con políticas de contención y aislamiento en Docker definidas para despliegue en daemon; el worker aislado sigue pendiente de una validación operacional del daemon en este entorno.
 
 ## Requisitos previos
 
@@ -137,8 +137,8 @@ propuestas). Se configuran únicamente por entorno:
 ```bash
 export MODEL_MODE=live
 export META_API_KEY='<inyectar-desde-un-secret-manager>'
-export META_API_BASE_URL='https://api.meta.com/v1'
-export META_API_RESPONSES_URL='https://api.meta.com/v1/responses'
+export META_API_BASE_URL='https://api.meta.ai/v1'
+export META_API_RESPONSES_URL='https://api.meta.ai/v1/chat/completions'
 ```
 
 Si falta `META_API_KEY`, el modo no es `live` o la llamada falla, el cliente
@@ -170,23 +170,7 @@ git status --short
 
 ## Declaración de alcance
 
-El historial público preparado para esta entrega contiene el baseline construido para ROF12 durante la semana del evento: F0–F5, contratos congelados en `contracts-frozen-1.0`, persistencia segura, autenticación, procedencia e ingesta documental. No se incorpora historial anterior ajeno al proyecto en este repositorio.
-
-## Configuración del remoto público
-
-Este checkout no tiene remoto configurado. Después de crear un repositorio vacío en GitHub o GitLab, configurar el destino y publicar únicamente el historial actual:
-
-```bash
-git remote add origin https://github.com/cristianjos38-dot/rof12.git
-git push -u origin master --tags
-```
-
-El remoto canónico publicado es `https://github.com/cristianjos38-dot/rof12.git`; el remoto anterior se conserva localmente como `backup-gsgs01382-stack`. Verificar antes con:
-
-```bash
-git remote -v
-git log --oneline --decorate --max-count=8
-```
+Todo el alcance documentado en esta entrega se construyó durante el hackathon de noviembre de 2026 y llega hasta la certificación final de Fase 18. El reembolso es el primer caso demostrable; el núcleo de seguridad es agnóstico a la industria.
 
 ## Staging con Supabase y Cloudflare
 

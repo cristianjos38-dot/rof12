@@ -13,13 +13,22 @@ always reduced to a proposal and evaluated by the Security Gate; Spark/SAM
 evidence is appended to quarantine audit records.
 
 Live adapter validation: the configured responses endpoint was exercised with
-`MODEL_MODE=live` without printing the key. The provider did not return a
-usable model response in this environment, so all three adapters safely used
-their deterministic fallbacks: Spark classified the adversarial document as
+`MODEL_MODE=live` without printing the key. An earlier provider response was
+unusable, so all three adapters safely used their deterministic fallbacks: Spark classified the adversarial document as
 `CRITICAL`, SAM emitted `<|box;...|>` and `<|mask;...|>`, and Wonder produced a
 proposal that remained subject to the Gate. The staging replay persisted 14
 rows and 7 decision events with all three model identifiers and `meta_trace`.
 The Supabase audit chain verified SHA-256 links across 76 events.
+
+The live adapter now targets the Meta OpenAI-compatible
+`https://api.meta.ai/v1/chat/completions` interface with `messages` and
+`temperature: 0.1`. An earlier live probe received HTTP 400 without a usable
+`choices[].message.content` completion; that response was treated as an
+untrusted provider failure and the deterministic fail-closed fallback was
+selected. The latest probe against the canonical endpoint returned HTTP 200
+for `muse-spark-1.3` and captured a completion successfully. The probe records
+status, latency and the sanitized completion field in the ignored local
+artifact `artifacts/meta_live_trace.json`.
 
 ## Posicionamiento del núcleo
 

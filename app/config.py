@@ -2,7 +2,10 @@ import os
 
 MODEL_MODE = os.getenv("MODEL_MODE", "mock").lower()
 MODEL_API_KEY = os.getenv("MODEL_API_KEY", "")
-MODEL_API_URL = os.getenv("MODEL_API_URL", "https://api.meta.ai/v1/models")
+META_API_KEY = os.getenv("META_API_KEY", "")
+META_API_BASE_URL = "https://api.meta.ai/v1"
+META_API_RESPONSES_URL = "https://api.meta.ai/v1/chat/completions"
+MODEL_API_URL = os.getenv("MODEL_API_URL", META_API_RESPONSES_URL)
 MODEL_TIMEOUT_SECONDS = float(os.getenv("MODEL_TIMEOUT_SECONDS", "15"))
 APP_ENV = os.getenv("APP_ENV", "local")
 DOCUMENT_STORAGE_ROOT = os.getenv("DOCUMENT_STORAGE_ROOT", "/tmp/rof12-documents")

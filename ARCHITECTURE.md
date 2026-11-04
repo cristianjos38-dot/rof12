@@ -30,5 +30,5 @@ strict contracts -> default-deny refund workflow -> side-effect tool
 
 All tenant-aware tables use `tenant_id`, RLS and `current_setting('app.tenant_id', true)`. Child records reference parents with `(tenant_id, foreign_id)` composite keys. PostgreSQL roles separate migrations, API access, executor writes and audit writes.
 
-The current baseline uses a local mock model router for deterministic tests. A `perception-worker` is not implemented in this repository.
+The multi-model adapter uses `muse-spark-1.3` for extraction and risk signals, `sam-3.1` for suspicious-region bounding boxes and masks, and `muse-wonder-1.0` for orchestration. Wonder output remains an untrusted proposal and must pass `SecurityGate`; the adapter degrades deterministically for tests and provider failures. Perception is executed in-process today, with Docker containment policies defined for daemon deployment.
 

@@ -13,7 +13,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from app.config import MODEL_API_KEY, MODEL_API_URL, MODEL_MODE, MODEL_TIMEOUT_SECONDS
+from app.config import META_API_KEY, MODEL_API_KEY, MODEL_API_URL, MODEL_MODE, MODEL_TIMEOUT_SECONDS
 from app.domain.contracts import ModelResponse
 
 
@@ -89,15 +89,27 @@ class ModelRouter:
             return ModelResponse.model_validate(json.load(handle))
 
     def _live_call(self, model: str, payload: dict, response_model: type[BaseModel]) -> BaseModel:
-        if not MODEL_API_KEY:
-            raise ModelRouterError("MODEL_API_KEY is required in live mode")
-        body = json.dumps({"model": model, "input": payload}).encode("utf-8")
-        request = urllib.request.Request(MODEL_API_URL, data=body, headers={"Authorization": "Bearer " + MODEL_API_KEY, "Content-Type": "application/json"})
+        api_key = MODEL_API_KEY or META_API_KEY
+        if not api_key:
+            raise ModelRouterError("META_API_KEY is required in live mode")
+        body = json.dumps({
+            "model": model,
+            "messages": [
+                {"role": "system", "content": "Return a structured JSON response only."},
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+            ],
+            "temperature": 0.1,
+        }).encode("utf-8")
+        request = urllib.request.Request(MODEL_API_URL, data=body, headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"})
         last_error = None
         for attempt in range(3):
             try:
                 with urllib.request.urlopen(request, timeout=MODEL_TIMEOUT_SECONDS) as response:
-                    return response_model.model_validate(json.loads(response.read().decode("utf-8")))
+                    raw = json.loads(response.read().decode("utf-8"))
+                    if isinstance(raw, dict) and raw.get("choices"):
+                        content = raw["choices"][0].get("message", {}).get("content", "")
+                        raw = json.loads(content) if isinstance(content, str) else content
+                    return response_model.model_validate(raw)
             except urllib.error.HTTPError as exc:
                 last_error = exc
                 if exc.code not in {429, 500, 502, 503, 504}:
