@@ -1,0 +1,6 @@
+# Core dependencies are declared in pyproject.toml and installed with `pip install .`.
+# Optional voice output/input adapters:
+edge-tts>=6.1.0
+SpeechRecognition>=3.10.0
+# PyAudio is platform-dependent; install it separately when microphone capture is needed.
+# python -m pip install pyaudio

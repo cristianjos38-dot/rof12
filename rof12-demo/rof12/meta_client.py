@@ -141,9 +141,20 @@ class MetaClient:
         )
 
     @staticmethod
-    def _parse_json_content(content) -> dict | str:
-        if not isinstance(content, str):
+    def _parse_json_content(content) -> dict | None:
+        """Parse provider JSON without allowing malformed content to escape."""
+        if isinstance(content, dict):
             return content
+        if not isinstance(content, str):
+            return None
+        candidate = content.strip()
+        if candidate.startswith("```"):
+            candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE).strip()
+        try:
+            parsed = json.loads(candidate)
+        except (TypeError, ValueError):
+            return None
+        return parsed if isinstance(parsed, dict) else None
 
     @classmethod
     def _extract_conversation_text(cls, value) -> str:
@@ -167,14 +178,6 @@ class MetaClient:
         if isinstance(value, list):
             return " ".join(filter(None, (cls._extract_conversation_text(item) for item in value)))
         return ""
-        candidate = content.strip()
-        if candidate.startswith("```"):
-            candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE).strip()
-        try:
-            parsed = json.loads(candidate)
-            return parsed if isinstance(parsed, dict) else content
-        except ValueError:
-            return content
 
     @staticmethod
     def _completion_content(raw):

@@ -83,7 +83,7 @@ def _legacy_speak(text: str) -> None:
     try:
         subprocess.run(command, check=False)
     except OSError:
-        return
+        print(f"[AUDIO NOTICE] No hay reproductor de voz disponible: {text}")
 
 
 def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
@@ -98,10 +98,14 @@ def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
             timeout=20,
         )
         if result.returncode == 0 and ALERT_AUDIO_PATH.exists() and ALERT_AUDIO_PATH.stat().st_size > 0:
-            subprocess.run(["afplay", "/tmp/voice_stream.mp3"], check=False)
-            return
+            playback = subprocess.run(["afplay", str(ALERT_AUDIO_PATH)], check=False)
+            if playback.returncode == 0:
+                return
     except (OSError, subprocess.SubprocessError):
         pass
+    if sys.platform != "darwin":
+        print(f"[AUDIO NOTICE] Audio no disponible en esta plataforma: {text}")
+        return
     _legacy_speak(text)
 
 

@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--interactive", action="store_true", help="pause between attacks")
 args = parser.parse_args()
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT))
 import json
 from rof12.core import ROF12Round
 engine = ROF12Round(ROOT / "policy/policy.json")

@@ -78,3 +78,18 @@ def protect(gate: SecurityGate, tool_name: str):
             return gate.execute(Proposal(tool_name, arguments), function)
         return guarded
     return decorator
+
+
+# Publicly expose the standalone defensive benchmark from the canonical package.
+from .attack_round import AuditChain, PermitAuthority, ROF12Round  # noqa: E402
+
+__all__ = [
+    "AuditChain",
+    "GateDecision",
+    "GateExecutionPermit",
+    "PermitAuthority",
+    "Proposal",
+    "ROF12Round",
+    "SecurityGate",
+    "protect",
+]

@@ -1,7 +1,6 @@
-import json, sys, unittest
+import json, unittest
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 from rof12.core import ROF12Round, AuditChain, PermitAuthority
 
 class AttackRoundTests(unittest.TestCase):

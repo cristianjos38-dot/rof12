@@ -71,7 +71,14 @@ def _persist_supabase(event_type: str, tenant_id: str, payload: dict) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description="ROF12 voice terminal")
     parser.add_argument("--keyboard", action="store_true", help="usar teclado sin intentar micrófono")
-    parser.add_argument("--voice", default=DEFAULT_VOICE, help="voz Edge-TTS; fallback macOS say")
+    parser.add_argument("--listen", action="store_true", help="habilitar captura de micrófono explícitamente")
+    parser.add_argument(
+        "--voice",
+        nargs="?",
+        const=DEFAULT_VOICE,
+        default=None,
+        help="habilitar micrófono y elegir voz Edge-TTS (por defecto, teclado seguro)",
+    )
     parser.add_argument("--no-speech", action="store_true", help="no invocar say; útil para pruebas")
     parser.add_argument("--audit-path", default=str(ROOT / "rof12-demo" / "out" / "voice_audit.jsonl"))
     args = parser.parse_args()
@@ -81,7 +88,9 @@ def main() -> int:
     gate = Gate(_load_policy(), store, audit)
     runtime = ToolRuntime(store, gate.verify_permit)
     meta = MetaClient()
-    voice_enabled = not args.keyboard
+    voice_name = args.voice or DEFAULT_VOICE
+    voice_enabled = bool((args.listen or args.voice) and not args.keyboard)
+    session_id = f"voice-{uuid.uuid4()}"
     empty_voice_attempts = 0
     print("ROF12 Voice Terminal — la voz propone; SecurityGate decide.")
     print("Ejemplo: reembolsa Q45.00 en la orden ORD-7731. Ctrl-D para salir.")
@@ -101,7 +110,7 @@ def main() -> int:
 
     def announce(decision: str, codes=None) -> None:
         if not args.no_speech:
-            speak_decision(decision, lambda message: speak(message, args.voice), codes=codes)
+                speak_decision(decision, lambda message: speak(message, voice_name), codes=codes)
 
     while True:
         try:
@@ -113,7 +122,7 @@ def main() -> int:
             empty_voice_attempts += 1
             print(f"[VOICE NOTICE] {exc}")
             if not args.no_speech:
-                speak("No logré escucharte, por favor repite tu instrucción.", args.voice)
+                speak("No logré escucharte, por favor repite tu instrucción.", voice_name)
             if empty_voice_attempts >= 2:
                 voice_enabled = False
                 print("[MODO TECLADO ACTIVO] Presiona [Espacio] o escribe 'v' para reactivar el micrófono.")
@@ -123,7 +132,7 @@ def main() -> int:
         if _is_exit_command(command):
             print("Cerrando runtime ROF12. Sesión finalizada.")
             if not args.no_speech:
-                speak("Cerrando runtime ROF12. Sesión finalizada.", args.voice)
+                speak("Cerrando runtime ROF12. Sesión finalizada.", voice_name)
             sys.exit(0)
         try:
             response = meta.respond(command)
@@ -133,7 +142,7 @@ def main() -> int:
                 record = audit.append("conversation", response.text, source=response.source, input_text=command)
                 print(f"ROF12: {response.text}")
                 if response.text and not args.no_speech:
-                    speak(response.text, args.voice)
+                    speak(response.text, voice_name)
                 persisted = _persist_supabase(
                     "VOICE_CONVERSATION",
                     "tenant_001",
@@ -154,7 +163,9 @@ def main() -> int:
             if decision.hold_id:
                 answer = get_text("Respuesta (autorizar/cancelar)> ")
                 approved = approval_from_text(answer)
-                gate.decide_hold(decision.hold_id, approved, "voice-operator", answer)
+                approver_id = f"voice-supervisor:{session_id}"
+                gate.decide_hold(decision.hold_id, approved, approver_id, answer)
+                print(f"Hold {decision.hold_id}: confirmación explícita={'sí' if approved else 'no'}; supervisor_session={session_id}")
                 if approved:
                     decision = gate.resume(decision.hold_id, proposal)
                     print(f"Revalidación: {decision.decision} codes={decision.codes or ['-']}")

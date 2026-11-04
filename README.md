@@ -23,8 +23,11 @@ ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autorida
 | F14 | Completada | Panel server-rendered seguro con Jinja2, HTMX local y aislamiento por tenant |
 | F15 | Completada | Laboratorio adversarial, cobertura T-01–T-11 y quality gates reproducibles |
 | F16 | Completada | Replay Baseline vs Protected, arranque Docker limpio y entrega reproducible |
+| F17 | Completada | Staging con Supabase, roles/RLS, Transaction Pooler, JWT del proveedor y perímetro Cloudflare documentado |
+| F18 | Completada | Arnés técnico, corpus adversarial, terminal de voz y certificación de persistencia/auditoría |
 
 La percepción documental se ejecuta in-process con políticas de contención y aislamiento en Docker definidas para despliegue en daemon; el worker aislado sigue pendiente de una validación operacional del daemon en este entorno.
+El benchmark oficial contiene 7 vectores sintéticos: 1 benigno permitido y 6 adversariales bloqueados (2 `QUARANTINE`, 5 `DENY`), sin falsos positivos.
 
 ## Requisitos previos
 
@@ -147,6 +150,11 @@ salidas de Wonder nunca ejecutan herramientas directamente: se convierten en
 `Proposal` y pasan por `SecurityGate.evaluate()`. Las señales de Spark y la
 segmentación de SAM se registran como `meta_trace` en `demo_results` y como
 evidencia de auditoría cuando el documento queda en cuarentena.
+
+La terminal de voz funciona en modo teclado por defecto. El micrófono solo se
+habilita explícitamente con `python3.11 demo/run_voice_terminal.py --listen` o
+`--voice`; `edge-tts`, `SpeechRecognition` y PyAudio son dependencias
+opcionales según el sistema operativo.
 
 ## Verificación rápida para jueces
 

@@ -13,6 +13,16 @@
 - Secret hygiene: `.env`, private keys, secrets directories and caches are ignored; checked-in credentials are explicitly local development placeholders.
 - Test isolation: tests run with `MODEL_MODE=mock` and do not call external APIs.
 
+## Flujos de Datos en Interfaz de Voz
+
+La terminal de voz usa `edge-tts` para síntesis mediante Microsoft Edge-TTS y
+`SpeechRecognition` para transcripción como adaptadores opcionales de
+entrada/salida. Estos adaptadores pueden desactivarse usando el modo teclado;
+el núcleo de decisión del `SecurityGate` opera localmente, de forma
+determinista y fail-closed. Ningún resultado de audio concede autoridad: toda
+propuesta, incluida una confirmación de `HOLD`, se revalida y se registra con
+un identificador de sesión del supervisor.
+
 ## Known limitations
 
 - The live PostgreSQL/Docker demonstration has not been executed in this environment because the Docker daemon is unavailable.

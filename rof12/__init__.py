@@ -11,5 +11,9 @@ if _demo_package.is_dir() and str(_demo_package) not in __path__:
     __path__.append(str(_demo_package))
 
 from .core import GateDecision, GateExecutionPermit, Proposal, SecurityGate, protect
+from .core import AuditChain, PermitAuthority, ROF12Round
 
-__all__ = ["SecurityGate", "Proposal", "GateDecision", "GateExecutionPermit", "protect"]
+__all__ = [
+    "AuditChain", "GateDecision", "GateExecutionPermit", "PermitAuthority",
+    "Proposal", "ROF12Round", "SecurityGate", "protect",
+]
