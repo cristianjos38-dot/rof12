@@ -1,6 +1,11 @@
 {
+  "updatedAt": "2026-11-04T21:12:59.973Z",
+  "createdAt": "2026-07-31T19:14:21.134Z",
   "id": "kQ3IZRYrxdsLdmVd",
   "name": "Agente de lectura de correos con PDF (Gmail + Extract Text + IA)",
+  "description": null,
+  "active": true,
+  "isArchived": false,
   "nodes": [
     {
       "parameters": {
@@ -14,6 +19,7 @@
         "filters": {
           "q": "to:gsgs01382@gmail.com has:attachment filename:pdf"
         },
+        "simple": false,
         "options": {
           "downloadAttachments": true
         }
@@ -23,13 +29,19 @@
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1,
       "position": [
-        200,
-        300
-      ]
+        208,
+        304
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mkdSFjxRjTEwCHaC",
+          "name": "Gmail account"
+        }
+      }
     },
     {
       "parameters": {
-        "operation": "text",
+        "operation": "pdf",
         "binaryPropertyName": "attachment_0",
         "options": {}
       },
@@ -38,14 +50,16 @@
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
       "position": [
-        420,
-        300
-      ]
+        432,
+        304
+      ],
+      "continueOnFail": true,
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Analiza el siguiente contenido extraído del documento PDF y genera un resumen claro para el operador:\n\nRemitente: {{ $('Gmail Trigger').item.json.from?.value?.[0]?.address || $('Gmail Trigger').item.json.from }}\nAsunto: {{ $('Gmail Trigger').item.json.subject }}\nFecha: {{ $('Gmail Trigger').item.json.date }}\n\nContenido del PDF:\n{{ $json.text }}",
+        "text": "=Analiza el siguiente contenido extraído del documento PDF y genera un resumen claro para el operador:\n\nRemitente: {{ $json.sender }}\nAsunto: {{ $json.subject }}\n\nContenido del PDF:\n{{ $json.document_text }}",
         "options": {}
       },
       "id": "848d7990-2b10-4ed2-8c90-67c46f15dbbc",
@@ -53,39 +67,47 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.6,
       "position": [
-        640,
-        300
+        656,
+        208
       ]
     },
     {
       "parameters": {
         "model": "qwen2.5:3b",
-        "options": {}
+        "options": {},
+        "baseUrl": "http://100.93.233.116:11434"
       },
       "id": "f516dcbf-df37-4f96-be6f-d17e57ba0b6b",
       "name": "Ollama Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
       "position": [
-        640,
-        500
-      ]
+        656,
+        576
+      ],
+      "credentials": {
+        "ollamaApi": {
+          "id": "nFNZLUVaBD7e2KYq",
+          "name": "Ollama account"
+        }
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "http://127.0.0.1:8012/v1/n8n/inspect-email",
+        "url": "http://100.122.213.76:8012/v1/n8n/inspect-email",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { sender: ($(\"Gmail Trigger\").item.json.from?.value?.[0]?.address || $(\"Gmail Trigger\").item.json.from || \"\"), subject: $(\"Gmail Trigger\").item.json.subject || \"\", document_text: $json.text || \"\", tenant_id: \"tenant_001\", agent_id: \"gmail_invoicing_agent\" } }}"
+        "jsonBody": "={{ { sender: $json.sender || \"remitente_desconocido\", subject: $json.subject || \"Sin Asunto\", document_text: $json.document_text || \"Factura sin contenido legible\", tenant_id: \"tenant_001\", agent_id: \"gmail_invoicing_agent\" } }}",
+        "options": {}
       },
       "id": "fe9e7bc6-7727-4843-bf56-4bace12b6c5d",
       "name": "ROF12 SecurityGate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        700,
-        300
+        704,
+        304
       ]
     },
     {
@@ -94,7 +116,8 @@
           "options": {
             "caseSensitive": true,
             "leftValue": "",
-            "typeValidation": "strict"
+            "typeValidation": "strict",
+            "version": 1
           },
           "conditions": [
             {
@@ -108,15 +131,16 @@
             }
           ],
           "combinator": "and"
-        }
+        },
+        "options": {}
       },
       "id": "994af585-1413-4735-addd-878f27600d26",
       "name": "¿Es Seguro?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        980,
-        300
+        992,
+        304
       ]
     },
     {
@@ -128,8 +152,22 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1260,
+        1264,
         480
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const text = $json.text || $json.textPlain || $json.snippet || $json.body || 'Factura sin contenido legible';\nconst sender = $(\"Gmail Trigger\").item.json.from?.value?.[0]?.address || $(\"Gmail Trigger\").item.json.from || 'remitente_desconocido';\nconst subject = $(\"Gmail Trigger\").item.json.subject || 'Sin Asunto';\nreturn { json: { sender, subject, document_text: text, tenant_id: 'tenant_001', agent_id: 'gmail_invoicing_agent' } };"
+      },
+      "id": "74fea783-4255-4986-8d58-09437483503a",
+      "name": "Preparar contenido para ROF12",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        652,
+        484
       ]
     }
   ],
@@ -149,7 +187,7 @@
       "main": [
         [
           {
-            "node": "ROF12 SecurityGate",
+            "node": "Preparar contenido para ROF12",
             "type": "main",
             "index": 0
           }
@@ -195,7 +233,62 @@
           }
         ]
       ]
+    },
+    "Preparar contenido para ROF12": {
+      "main": [
+        [
+          {
+            "node": "ROF12 SecurityGate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": true
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "staticData": {
+    "node:Gmail Trigger": {
+      "lastTimeChecked": 1793826564
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "pinData": {},
+  "versionId": "225c10d3-8841-4a78-b937-6a464fed709e",
+  "activeVersionId": "b0b303f3-966a-4f62-9af0-97674143f566",
+  "versionCounter": 16,
+  "triggerCount": 1,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-07-31T19:14:21.136Z",
+      "createdAt": "2026-07-31T19:14:21.136Z",
+      "role": "workflow:owner",
+      "workflowId": "kQ3IZRYrxdsLdmVd",
+      "projectId": "0YSino4J72OesOsb",
+      "project": {
+        "updatedAt": "2026-07-31T18:55:06.582Z",
+        "createdAt": "2026-06-22T18:02:23.370Z",
+        "id": "0YSino4J72OesOsb",
+        "name": "CHRISTIAN Alvarez <cristianjos38@gmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "9104c85b-9739-4e14-ab5e-7a3d76ec81c0"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
 }

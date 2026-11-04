@@ -16,6 +16,10 @@ import requests
 WORKFLOW_ID = "kQ3IZRYrxdsLdmVd"
 BASE_URL = "http://100.109.127.88:5678"
 ARTIFACT = Path("artifacts/workflow_import_ready.json")
+OLLAMA_BASE_URL = "http://100.93.233.116:11434"
+OLLAMA_CREDENTIAL_ID = "nFNZLUVaBD7e2KYq"
+OLLAMA_CREDENTIAL_NAME = "Ollama account"
+ROF12_N8N_URL = "http://100.122.213.76:8012/v1/n8n/inspect-email"
 
 
 def load_env(path: Path) -> None:
@@ -43,11 +47,32 @@ def extract_node(nodes):
     )
 
 
+def normalise_nodes(nodes):
+    """Apply the PDF/fallback settings without changing node identities."""
+    gmail = node(nodes, "Gmail Trigger")
+    if gmail:
+        params = gmail.setdefault("parameters", {})
+        params["simple"] = False
+        params.setdefault("filters", {})["q"] = "to:gsgs01382@gmail.com has:attachment filename:pdf"
+        params.setdefault("options", {})["downloadAttachments"] = True
+    extract = extract_node(nodes)
+    if extract:
+        extract.setdefault("parameters", {})["operation"] = "pdf"
+        extract["parameters"]["binaryPropertyName"] = "attachment_0"
+        extract["continueOnFail"] = True
+        extract["onError"] = "continueRegularOutput"
+    return gmail, extract
+
+
 def edge(name, index=0):
     return {"node": name, "type": "main", "index": index}
 
 
 def patch(workflow: dict[str, Any]) -> dict[str, Any]:
+    if isinstance(workflow, list):
+        if len(workflow) != 1:
+            raise RuntimeError("El export debe contener exactamente un workflow")
+        workflow = workflow[0]
     result = copy.deepcopy(workflow)
     nodes = result.setdefault("nodes", [])
     connections = result.setdefault("connections", {})
@@ -55,16 +80,30 @@ def patch(workflow: dict[str, Any]) -> dict[str, Any]:
     agent = node(nodes, "AI Agent")
     if not extract or not agent:
         raise RuntimeError("No se encontraron Extract from File y AI Agent")
+    gmail, extract = normalise_nodes(nodes)
+
+    fallback = node(nodes, "Preparar contenido para ROF12")
+    if not fallback:
+        x, y = extract.get("position", [0, 0])
+        fallback = {"parameters": {
+            "mode": "runOnceForEachItem",
+            "jsCode": "const text = $json.text || $json.textPlain || $json.snippet || $json.body || 'Factura sin contenido legible';\nconst sender = $(\"Gmail Trigger\").item.json.from?.value?.[0]?.address || $(\"Gmail Trigger\").item.json.from || 'remitente_desconocido';\nconst subject = $(\"Gmail Trigger\").item.json.subject || 'Sin Asunto';\nreturn { json: { sender, subject, document_text: text, tenant_id: 'tenant_001', agent_id: 'gmail_invoicing_agent' } };",
+        }, "id": str(uuid.uuid4()), "name": "Preparar contenido para ROF12", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [x + 220, y + 180]}
+        nodes.append(fallback)
 
     gate = node(nodes, "ROF12 SecurityGate")
     if not gate:
         x, y = extract.get("position", [0, 0])
         gate = {"parameters": {
-            "method": "POST", "url": "http://127.0.0.1:8012/v1/n8n/inspect-email",
+            "method": "POST", "url": ROF12_N8N_URL,
             "sendBody": True, "specifyBody": "json",
-            "jsonBody": "={{ { sender: ($(\"Gmail Trigger\").item.json.from?.value?.[0]?.address || $(\"Gmail Trigger\").item.json.from || \"\"), subject: $(\"Gmail Trigger\").item.json.subject || \"\", document_text: $json.text || \"\", tenant_id: \"tenant_001\", agent_id: \"gmail_invoicing_agent\" } }}",
+            "jsonBody": "={{ { sender: $json.sender || \"remitente_desconocido\", subject: $json.subject || \"Sin Asunto\", document_text: $json.document_text || \"Factura sin contenido legible\", tenant_id: \"tenant_001\", agent_id: \"gmail_invoicing_agent\" } }}",
         }, "id": str(uuid.uuid4()), "name": "ROF12 SecurityGate", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4.2, "position": [x + 280, y]}
         nodes.append(gate)
+    gate.setdefault("parameters", {}).update({
+        "method": "POST", "url": ROF12_N8N_URL, "sendBody": True, "specifyBody": "json",
+        "jsonBody": '={{ { sender: $json.sender || "remitente_desconocido", subject: $json.subject || "Sin Asunto", document_text: $json.document_text || "Factura sin contenido legible", tenant_id: "tenant_001", agent_id: "gmail_invoicing_agent" } }}',
+    })
 
     branch = node(nodes, "¿Es Seguro?")
     if not branch:
@@ -78,7 +117,15 @@ def patch(workflow: dict[str, Any]) -> dict[str, Any]:
         blocker = {"parameters": {"jsCode": 'throw new Error("ROF12: ataque bloqueado antes del AI Agent");'}, "id": str(uuid.uuid4()), "name": "Ataque Bloqueado por ROF12", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [x + 280, y + 180]}
         nodes.append(blocker)
 
-    connections[extract["name"]] = {"main": [[edge(gate["name"])]]}
+    ollama = node(nodes, "Ollama Chat Model")
+    if ollama:
+        ollama["credentials"] = {"ollamaApi": {"id": OLLAMA_CREDENTIAL_ID, "name": OLLAMA_CREDENTIAL_NAME}}
+        ollama.setdefault("parameters", {})["baseUrl"] = OLLAMA_BASE_URL
+    if agent:
+        agent.setdefault("parameters", {})["text"] = "=Analiza el siguiente contenido extraído del documento PDF y genera un resumen claro para el operador:\n\nRemitente: {{ $json.sender }}\nAsunto: {{ $json.subject }}\n\nContenido del PDF:\n{{ $json.document_text }}"
+
+    connections[extract["name"]] = {"main": [[edge(fallback["name"])]]}
+    connections[fallback["name"]] = {"main": [[edge(gate["name"])]]}
     connections[gate["name"]] = {"main": [[edge(branch["name"])]]}
     connections[branch["name"]] = {"main": [[edge(agent["name"])], [edge(blocker["name"])]]}
     result["id"] = result.get("id") or WORKFLOW_ID

@@ -129,4 +129,9 @@ def inspect_email(payload: InspectEmailRequest, request: Request):
         "permit_token": permit_token,
         "sha256": event_hash,
         "alert_message": alert_message,
+        # The guarded branch must retain the vetted content for AI Agent.  Do
+        # not return it on DENY, so blocked material cannot propagate.
+        "document_text": payload.document_text if decision is GateDecision.ALLOW else None,
+        "sender": payload.sender if decision is GateDecision.ALLOW else None,
+        "subject": payload.subject if decision is GateDecision.ALLOW else None,
     }
