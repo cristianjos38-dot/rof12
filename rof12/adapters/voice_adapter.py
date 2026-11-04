@@ -119,9 +119,11 @@ def listen_text(*, timeout: float = 5.0, phrase_time_limit: float = 12.0) -> str
         raise RuntimeError("SpeechRecognition no está instalado; usa --keyboard") from exc
 
     recognizer = sr.Recognizer()
+    recognizer.dynamic_energy_threshold = True
+    recognizer.pause_threshold = 0.8
     try:
         with sr.Microphone() as source:
-            recognizer.adjust_for_ambient_noise(source, duration=0.3)
+            recognizer.adjust_for_ambient_noise(source, duration=0.8)
             audio = recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_time_limit)
         # Google recognition is intentionally opt-in at the runner level because
         # it is a network service; callers can instead use keyboard fallback.

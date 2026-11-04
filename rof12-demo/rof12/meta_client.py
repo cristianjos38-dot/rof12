@@ -11,6 +11,7 @@ import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 
 
 SPARK_MODEL = "muse-spark-1.3"
@@ -38,6 +39,14 @@ class SegmentationResult:
 @dataclass(frozen=True)
 class WonderResult:
     plan: str
+    proposal: dict
+    source: str
+
+
+@dataclass(frozen=True)
+class ConversationResult:
+    mode: str
+    text: str
     proposal: dict
     source: str
 
@@ -77,6 +86,56 @@ class MetaClient:
         if refund:
             return WonderResult("deterministic proposal from document", {"tool": "refunds.create", "args": {"order_id": refund.group(3), "amount": float(refund.group(1).replace(",", "")), "destination_account": refund.group(2).rstrip(".")}}, "deterministic-fallback")
         return WonderResult("no executable proposal", {}, "deterministic-fallback")
+
+    def respond(self, user_text: str) -> ConversationResult:
+        """Classify every turn as conversation or an untrusted tool proposal."""
+        system_prompt = (
+            "You are the ROF12 voice assistant. Return JSON only. For greetings, status questions, "
+            "or questions about ROF12, return {\"mode\":\"conversation\",\"text\":\"...\"} "
+            "with at most two concise professional Spanish sentences saying the runtime is active, "
+            "monitoring threats, and ready to evaluate actions. For requests to refund, transfer, "
+            "delete, or change data, return {\"mode\":\"proposal\",\"tool_name\":\"...\",\"args\":{}}. "
+            "Never claim execution or authorization."
+        )
+        result = self._call(SPARK_MODEL, {"user_message": user_text}, system_prompt)
+        if result is not None:
+            mode = str(result.get("mode", "conversation")).lower()
+            if mode == "proposal" or result.get("tool_name") or result.get("proposal"):
+                proposal = result.get("proposal", result)
+                return ConversationResult("proposal", "", dict(proposal), "meta")
+            return ConversationResult("conversation", self._two_sentences(str(result.get("text", ""))), {}, "meta")
+
+        lowered = user_text.casefold()
+        if any(marker in lowered for marker in ("hola", "buenas", "qué haces", "que haces", "función", "funcion", "alertas", "sistema")):
+            return ConversationResult(
+                "conversation",
+                "ROF12 está activo, monitorea amenazas y está listo para evaluar acciones.",
+                {},
+                "deterministic-fallback",
+            )
+        if any(marker in lowered for marker in ("reembols", "devolver", "reembolso", "transfer", "mover dinero", "borrar", "borra", "eliminar", "elimina", "cambiar datos", "cambia datos")):
+            amount_match = re.search(r"(?<![\w.-])(?:q|gtq|usd|eur|\$)?\s*([0-9]+(?:[.,][0-9]{1,2})?)(?![\w.])", lowered)
+            order_match = re.search(r"(?:orden|order)\s*([a-z0-9-]+)|\b(ORD-[0-9]+)\b", lowered, re.IGNORECASE)
+            if "reembols" in lowered or "reembolso" in lowered or "devolver" in lowered:
+                try:
+                    amount = Decimal(amount_match.group(1).replace(",", ".")) if amount_match else Decimal("0")
+                except InvalidOperation:
+                    amount = Decimal("0")
+                order_id = (order_match.group(1) or order_match.group(2)).upper() if order_match else "UNKNOWN"
+                return ConversationResult("proposal", "", {"tool_name": "process_refund", "args": {"order_id": order_id, "amount": amount, "reason": user_text}}, "deterministic-fallback")
+            tool = "money.transfer" if "transfer" in lowered or "mover dinero" in lowered else "records.mutate"
+            return ConversationResult("proposal", "", {"tool_name": tool, "args": {"request": user_text}}, "deterministic-fallback")
+        return ConversationResult(
+            "conversation",
+            "ROF12 está activo y listo para evaluar acciones o responder preguntas de seguridad.",
+            {},
+            "deterministic-fallback",
+        )
+
+    @staticmethod
+    def _two_sentences(text: str) -> str:
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+        return " ".join(sentences[:2]) or "ROF12 está activo y listo para evaluar acciones."
 
     def _call(self, model: str, payload: dict, system_prompt: str) -> dict | None:
         if not self.api_key or os.getenv("MODEL_MODE", "mock") != "live":
