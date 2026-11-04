@@ -1,0 +1,200 @@
+{
+  "name": "Agente de lectura de correos con PDF (Gmail + Extract Text + IA)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "q": "to:gsgs01382@gmail.com has:attachment filename:pdf"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "2d1f4d92-2612-421f-827d-92a0134f9e1e",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "attachment_0",
+        "options": {}
+      },
+      "id": "c7a81234-90ab-4cde-8ef1-123456789abc",
+      "name": "Extract From File",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        420,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analiza el siguiente contenido extraído del documento PDF y genera un resumen claro para el operador:\n\nRemitente: {{ $('Gmail Trigger').item.json.from?.value?.[0]?.address || $('Gmail Trigger').item.json.from }}\nAsunto: {{ $('Gmail Trigger').item.json.subject }}\nFecha: {{ $('Gmail Trigger').item.json.date }}\n\nContenido del PDF:\n{{ $json.text }}",
+        "options": {}
+      },
+      "id": "848d7990-2b10-4ed2-8c90-67c46f15dbbc",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        640,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "qwen2.5:3b",
+        "options": {}
+      },
+      "id": "f516dcbf-df37-4f96-be6f-d17e57ba0b6b",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        640,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8012/v1/n8n/inspect-email",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { sender: ($(\"Gmail Trigger\").item.json.from?.value?.[0]?.address || $(\"Gmail Trigger\").item.json.from || \"\"), subject: $(\"Gmail Trigger\").item.json.subject || \"\", document_text: $json.text || \"\", tenant_id: \"tenant_001\", agent_id: \"gmail_invoicing_agent\" } }}"
+      },
+      "id": "fe9e7bc6-7727-4843-bf56-4bace12b6c5d",
+      "name": "ROF12 SecurityGate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "a520fdcb-b664-4c93-9234-33d0b889419d",
+              "leftValue": "={{ $json.is_safe }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "994af585-1413-4735-addd-878f27600d26",
+      "name": "¿Es Seguro?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "throw new Error(\"ROF12: ataque bloqueado antes del AI Agent\");"
+      },
+      "id": "14d60158-66ea-49f2-942a-dab9c7670b1d",
+      "name": "Ataque Bloqueado por ROF12",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract From File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract From File": {
+      "main": [
+        [
+          {
+            "node": "ROF12 SecurityGate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ROF12 SecurityGate": {
+      "main": [
+        [
+          {
+            "node": "¿Es Seguro?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Seguro?": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ataque Bloqueado por ROF12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true
+}
