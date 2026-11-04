@@ -30,6 +30,19 @@ def _load_policy() -> dict:
     return json.loads((ROOT / "rof12-demo" / "policy" / "policy.json").read_text(encoding="utf-8"))
 
 
+def _is_exit_command(text: str) -> bool:
+    normalized = text.casefold()
+    return any(word in normalized for word in ("apágate", "apag ate", "cerrar", "salir", "apagar", "adiós", "adios", "exit"))
+
+
+def _canonical_tool(tool_name: str) -> str:
+    """Map only known refund aliases to the registered Gate capability."""
+    normalized = tool_name.strip().casefold().replace("-", "_")
+    if normalized in {"process_refund", "refund", "refund_create", "create_refund", "refunds_create"} or "refund" in normalized or "reembolso" in normalized:
+        return "refunds.create"
+    return tool_name
+
+
 def _persist_supabase(event_type: str, tenant_id: str, payload: dict) -> bool:
     """Persist a sanitized decision when a database URL is configured."""
     url = os.getenv("DATABASE_OWNER_URL") or os.getenv("DATABASE_URL")
@@ -74,14 +87,8 @@ def main() -> int:
     def get_text(prompt: str) -> str:
         if args.keyboard:
             return input(prompt)
-        try:
-            print(prompt + " [micrófono]")
-            return listen_text()
-        except (RuntimeError, EOFError) as exc:
-            print(f"[VOICE NOTICE] {exc}")
-            if not args.no_speech:
-                speak("No logré escucharte con claridad. ¿Puedes repetirlo?", args.voice)
-            return input(prompt + " [teclado] ")
+        print(prompt + " [micrófono]")
+        return listen_text()
 
     def announce(decision: str, codes=None) -> None:
         if not args.no_speech:
@@ -93,14 +100,26 @@ def main() -> int:
         except (EOFError, KeyboardInterrupt):
             print("\nSaliendo.")
             return 0
+        except RuntimeError as exc:
+            print(f"[VOICE NOTICE] {exc}")
+            if not args.no_speech:
+                speak("No logré escucharte, por favor repite tu instrucción.", args.voice)
+            continue
         if not command:
             continue
+        if _is_exit_command(command):
+            print("Cerrando runtime ROF12. Sesión finalizada.")
+            if not args.no_speech:
+                speak("Cerrando runtime ROF12. Sesión finalizada.", args.voice)
+            sys.exit(0)
         try:
             response = meta.respond(command)
+            label = "Live" if response.source == "meta" else "Mock"
+            print(f"[Meta AI {label}] tokens={response.tokens_total} latency={response.latency_ms}ms")
             if response.mode == "conversation":
                 record = audit.append("conversation", response.text, source=response.source, input_text=command)
                 print(f"ROF12: {response.text}")
-                if not args.no_speech:
+                if response.text and not args.no_speech:
                     speak(response.text, args.voice)
                 persisted = _persist_supabase(
                     "VOICE_CONVERSATION",
@@ -112,8 +131,7 @@ def main() -> int:
 
             proposal_data = response.proposal
             tool_name = proposal_data.get("tool_name") or proposal_data.get("tool") or "unrecognized.action"
-            if tool_name == "process_refund":
-                tool_name = "refunds.create"
+            tool_name = _canonical_tool(tool_name)
             args_data = proposal_data.get("args", {})
             proposal = Proposal("TKT-1042", "support-agent-01", tool_name, args_data, command, tenant_id="tenant_001")
             decision = gate.evaluate(proposal)
