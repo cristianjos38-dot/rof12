@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -49,6 +50,8 @@ class ConversationResult:
     text: str
     proposal: dict
     source: str
+    tokens_total: int = 0
+    latency_ms: float = 0.0
 
 
 class MetaClient:
@@ -90,20 +93,24 @@ class MetaClient:
     def respond(self, user_text: str) -> ConversationResult:
         """Classify every turn as conversation or an untrusted tool proposal."""
         system_prompt = (
-            "You are the ROF12 voice assistant. Return JSON only. For greetings, status questions, "
-            "or questions about ROF12, return {\"mode\":\"conversation\",\"text\":\"...\"} "
-            "with at most two concise professional Spanish sentences saying the runtime is active, "
-            "monitoring threats, and ready to evaluate actions. For requests to refund, transfer, "
-            "delete, or change data, return {\"mode\":\"proposal\",\"tool_name\":\"...\",\"args\":{}}. "
-            "Never claim execution or authorization."
+            "Eres ROF12, un agente de seguridad determinista y copiloto de ejecución en producción. "
+            "Tu objetivo: si el usuario saluda, hace preguntas generales, pregunta qué haces, para qué sirves "
+            "o solicita explicaciones, responde con naturalidad, inteligencia y concisión, en español, en máximo "
+            "2 a 3 oraciones; sé profesional, técnico y directo. Si solicita una acción de ejecución (reembolso, "
+            "transferir dinero, alterar base de datos o configurar políticas), NO respondas con texto plano: emite "
+            "EXCLUSIVAMENTE JSON {\"proposal\":true,\"tool_name\":\"<nombre_herramienta>\",\"args\":{}}. "
+            "Nunca afirmes que ejecutaste o autorizaste una acción."
         )
-        result = self._call(SPARK_MODEL, {"user_message": user_text}, system_prompt)
-        if result is not None:
-            mode = str(result.get("mode", "conversation")).lower()
-            if mode == "proposal" or result.get("tool_name") or result.get("proposal"):
-                proposal = result.get("proposal", result)
-                return ConversationResult("proposal", "", dict(proposal), "meta")
-            return ConversationResult("conversation", self._two_sentences(str(result.get("text", ""))), {}, "meta")
+        live = self._call_raw(SPARK_MODEL, {"user_message": user_text}, system_prompt)
+        if live is not None:
+            raw, tokens_total, latency_ms = live
+            content = self._completion_content(raw)
+            parsed = self._parse_json_content(content)
+            if isinstance(parsed, dict) and (parsed.get("proposal") is True or parsed.get("tool_name") or str(parsed.get("mode", "")).lower() == "proposal"):
+                proposal = parsed.get("proposal_data", parsed)
+                return ConversationResult("proposal", "", dict(proposal), "meta", tokens_total, latency_ms)
+            text = content if isinstance(content, str) else str(parsed.get("text", "")) if isinstance(parsed, dict) else ""
+            return ConversationResult("conversation", text.strip(), {}, "meta", tokens_total, latency_ms)
 
         lowered = user_text.casefold()
         if any(marker in lowered for marker in ("hola", "buenas", "qué haces", "que haces", "función", "funcion", "alertas", "sistema")):
@@ -133,9 +140,49 @@ class MetaClient:
         )
 
     @staticmethod
-    def _two_sentences(text: str) -> str:
-        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-        return " ".join(sentences[:2]) or "ROF12 está activo y listo para evaluar acciones."
+    def _parse_json_content(content) -> dict | str:
+        if not isinstance(content, str):
+            return content
+        candidate = content.strip()
+        if candidate.startswith("```"):
+            candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE).strip()
+        try:
+            parsed = json.loads(candidate)
+            return parsed if isinstance(parsed, dict) else content
+        except ValueError:
+            return content
+
+    @staticmethod
+    def _completion_content(raw):
+        if isinstance(raw, dict) and raw.get("choices"):
+            return raw["choices"][0].get("message", {}).get("content", "")
+        return raw
+
+    def _call_raw(self, model: str, payload: dict, system_prompt: str):
+        if not self.api_key or os.getenv("MODEL_MODE", "mock") != "live":
+            return None
+        started = time.perf_counter()
+        request = urllib.request.Request(
+            self.responses_url,
+            data=json.dumps({
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+                ],
+                "temperature": 0.1,
+            }).encode(),
+            headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                raw = json.loads(response.read().decode())
+                usage = raw.get("usage", {}) if isinstance(raw, dict) else {}
+                tokens = int(usage.get("total_tokens", 0) or 0)
+                latency = round((time.perf_counter() - started) * 1000, 3)
+                return raw, tokens, latency
+        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, ValueError, OSError, TypeError):
+            return None
 
     def _call(self, model: str, payload: dict, system_prompt: str) -> dict | None:
         if not self.api_key or os.getenv("MODEL_MODE", "mock") != "live":
