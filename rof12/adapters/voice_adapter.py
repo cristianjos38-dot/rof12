@@ -27,7 +27,15 @@ DECISION_MESSAGES = {
 }
 DEFAULT_VOICE = "es-MX-JorgeNeural"
 FALLBACK_VOICE = "Paulina"
-ALERT_AUDIO_PATH = Path("/tmp/rof12_alert.mp3")
+ALERT_AUDIO_PATH = Path("/tmp/voice_stream.mp3")
+ALERT_MESSAGES = {
+    "PROMPT_INJECTION_DETECTED": "Inyección interceptada. Texto blanco en factura aislado en cuarentena.",
+    "METADATA_MISMATCH": "Anomalía detectada. Inconsistencia entre metadatos y contenido visible aislada.",
+    "POLICY_CAP_EXCEEDED": "Operación denegada. Transferencia de noventa y cinco mil supera política.",
+    "HMAC_SIGNATURE_MISMATCH": "Acción rechazada. Argumentos mutados violan el permiso criptográfico firmado.",
+    "TOKEN_ALREADY_CONSUMED": "Transacción cancelada. Token consumido previamente bloqueado a nivel atómico.",
+    "TENANT_ACCESS_VIOLATION": "Acceso restringido. Aislamiento multi-tenant bloqueó solicitud no autorizada.",
+}
 INVALID_COMMAND_MESSAGE = "No pude interpretar la orden. Por favor especifique el monto y el identificador."
 
 
@@ -85,12 +93,12 @@ def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
     try:
         ALERT_AUDIO_PATH.unlink(missing_ok=True)
         result = subprocess.run(
-            [sys.executable, "-m", "edge_tts", "--voice", voice, "--text", text, "--write-media", str(ALERT_AUDIO_PATH)],
+            [sys.executable, "-m", "edge_tts", "--voice", voice, "--rate", "+10%", "--text", text, "--write-media", str(ALERT_AUDIO_PATH)],
             check=False,
             timeout=20,
         )
         if result.returncode == 0 and ALERT_AUDIO_PATH.exists() and ALERT_AUDIO_PATH.stat().st_size > 0:
-            subprocess.run(["afplay", "/tmp/rof12_alert.mp3"], check=False)
+            subprocess.run(["afplay", "/tmp/voice_stream.mp3"], check=False)
             return
     except (OSError, subprocess.SubprocessError):
         pass
@@ -105,8 +113,10 @@ def speak_decision(
     """Speak a contextual, fixed message associated with a Gate decision."""
     normalized = decision.upper()
     code_set = {str(code).upper() for code in (codes or ())}
-    key = "DENY_ORDER_NOT_FOUND" if normalized == "DENY" and "ORDER_NOT_FOUND" in code_set else normalized
+    alert_code = next((code for code in code_set if code in ALERT_MESSAGES), None)
+    key = alert_code if alert_code else ("DENY_ORDER_NOT_FOUND" if normalized == "DENY" and "ORDER_NOT_FOUND" in code_set else normalized)
     message = DECISION_MESSAGES.get(key, DECISION_MESSAGES["DENY"])
+    message = ALERT_MESSAGES.get(key, message)
     speaker(message)
     return message
 

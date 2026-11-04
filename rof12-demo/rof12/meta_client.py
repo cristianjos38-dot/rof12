@@ -108,7 +108,9 @@ class MetaClient:
             if isinstance(parsed, dict) and (parsed.get("proposal") is True or parsed.get("tool_name") or str(parsed.get("mode", "")).lower() == "proposal"):
                 proposal = parsed.get("proposal_data", parsed)
                 return ConversationResult("proposal", "", dict(proposal), "meta", tokens_total, latency_ms)
-            text = content if isinstance(content, str) else str(parsed.get("text", "")) if isinstance(parsed, dict) else ""
+            text = self._extract_conversation_text(parsed if isinstance(parsed, (dict, list)) else content)
+            if not text:
+                text = "ROF12 está activo y listo para responder preguntas de seguridad."
             return ConversationResult("conversation", text.strip(), {}, "meta", tokens_total, latency_ms)
 
         lowered = user_text.casefold()
@@ -142,6 +144,29 @@ class MetaClient:
     def _parse_json_content(content) -> dict | str:
         if not isinstance(content, str):
             return content
+
+    @classmethod
+    def _extract_conversation_text(cls, value) -> str:
+        """Extract only conversational text from nested provider response shapes."""
+        if isinstance(value, str):
+            candidate = value.strip()
+            if candidate.startswith("```"):
+                candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE).strip()
+            try:
+                decoded = json.loads(candidate)
+            except ValueError:
+                return candidate
+            return cls._extract_conversation_text(decoded)
+        if isinstance(value, dict):
+            for key in ("message", "reply", "content", "text"):
+                if key in value:
+                    extracted = cls._extract_conversation_text(value[key])
+                    if extracted:
+                        return extracted
+            return ""
+        if isinstance(value, list):
+            return " ".join(filter(None, (cls._extract_conversation_text(item) for item in value)))
+        return ""
         candidate = content.strip()
         if candidate.startswith("```"):
             candidate = re.sub(r"^```(?:json)?\s*|\s*```$", "", candidate, flags=re.IGNORECASE).strip()
