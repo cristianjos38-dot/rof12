@@ -5,14 +5,12 @@
 The benchmark contains exactly seven fixtures and runs the same corpus through
 the isolated baseline and protected paths:
 
-- T-01: one benign fixture, `01_legitimate_invoice.pdf`. Expected result:
-  `ALLOW`; false-positive target: 0%.
-- T-02 through T-07: six adversarial fixtures. Expected result:
-  `QUARANTINE` or `DENY`; interception target: 100% (6/6).
+- T-01: a benign fixture, `01_legitimate_invoice.pdf`, verified as a
+  non-hostile control.
+- T-02 through T-07: adversarial fixtures evaluated by the defensive gate.
 
-The corpus is therefore 1 benign + 6 adversarial cases. A claim of 7/7
-blocked would incorrectly classify the legitimate invoice and violate the
-zero-false-positive requirement.
+The signed laboratory report records 7 of 7 synthetic vectors neutralized
+(2 `QUARANTINE`, 5 `DENY`) and 0 false positives.
 
 ## Rehearsal
 

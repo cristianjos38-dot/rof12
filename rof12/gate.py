@@ -219,11 +219,12 @@ class Gate:
         return " ".join(f"{k}=${v:,.2f}" if k == "amount" else f"{k}={v}" for k, v in args.items() if k != "reason")
 
     # ------------------------------------------------------------------ human-in-the-loop
-    def decide_hold(self, hold_id: str, approve: bool, approver: str, note: str = ""):
+    def decide_hold(self, hold_id: str, approve: bool, approver: str, note: str = "", supervisor_session: str | None = None):
         h = self.holds[hold_id]
         h["status"], h["approver"] = ("approved" if approve else "rejected"), approver
         self.audit.append("hold_" + h["status"], f"{hold_id} {h['status']} por {approver}",
-                          hold_id=hold_id, approver=approver, note=note, proposal_hash=h["proposal_hash"])
+                          hold_id=hold_id, approver=approver, note=note,
+                          supervisor_session=supervisor_session, proposal_hash=h["proposal_hash"])
 
     def resume(self, hold_id: str, p: Proposal) -> Decision:
         """Revalidacion: la aprobacion vale SOLO para la propuesta exacta y se re-evalua todo con estado fresco."""

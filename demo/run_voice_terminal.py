@@ -10,7 +10,6 @@ import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "rof12-demo"))
 sys.path.insert(0, str(ROOT))
 
 from rof12.adapters.voice_adapter import (  # noqa: E402
@@ -110,7 +109,7 @@ def main() -> int:
 
     def announce(decision: str, codes=None) -> None:
         if not args.no_speech:
-                speak_decision(decision, lambda message: speak(message, voice_name), codes=codes)
+            speak_decision(decision, lambda message: speak(message, voice_name), codes=codes)
 
     while True:
         try:
@@ -162,9 +161,9 @@ def main() -> int:
             announce(decision.decision, decision.codes)
             if decision.hold_id:
                 answer = get_text("Respuesta (autorizar/cancelar)> ")
-                approved = approval_from_text(answer)
+                approved = approval_from_text(answer, decision.hold_id)
                 approver_id = f"voice-supervisor:{session_id}"
-                gate.decide_hold(decision.hold_id, approved, approver_id, answer)
+                gate.decide_hold(decision.hold_id, approved, approver_id, answer, supervisor_session=session_id)
                 print(f"Hold {decision.hold_id}: confirmación explícita={'sí' if approved else 'no'}; supervisor_session={session_id}")
                 if approved:
                     decision = gate.resume(decision.hold_id, proposal)

@@ -1,14 +1,8 @@
-"""Optional top-level adapters for the ROF12 runtime.
+"""Canonical ROF12 runtime package.
 
-The standalone terminal keeps the historical demo modules in
-``rof12-demo/rof12``.  Extending the package path lets the runner import those
-modules without duplicating or replacing the security implementation.
+All runtime modules are shipped from this package. ``rof12-demo`` contains
+only presentation assets and entry points.
 """
-from pathlib import Path
-
-_demo_package = Path(__file__).resolve().parents[1] / "rof12-demo" / "rof12"
-if _demo_package.is_dir() and str(_demo_package) not in __path__:
-    __path__.append(str(_demo_package))
 
 from .core import GateDecision, GateExecutionPermit, Proposal, SecurityGate, protect
 from .core import AuditChain, PermitAuthority, ROF12Round

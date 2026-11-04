@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-where = [".", "rof12-demo"]
+where = ["."]
 include = ["app*", "rof12*"]
 
 [project]
@@ -32,7 +32,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8,<9", "httpx>=0.27,<1", "pip-audit>=2.9,<3"]
 voice = ["edge-tts>=6.1.0", "SpeechRecognition>=3.10.0"]
-voice-pyaudio = ["pyaudio>=0.2.14"]
+# PyAudio is platform-dependent; install it separately when microphone input
+# is required (for example: python -m pip install pyaudio).
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

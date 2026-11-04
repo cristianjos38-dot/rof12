@@ -9,7 +9,7 @@ ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autorida
 | F0 | Completada | Scaffold, configuración, healthcheck y pruebas locales |
 | F1 | Completada | Contratos Pydantic estrictos y `MODEL_MODE=mock` |
 | F2 | Completada | Gate de reembolsos, límites, aprobación, cuarentena e idempotencia |
-| F3 | Completada | PostgreSQL, Alembic, RLS, FKs compuestas y roles G5 |
+| F3 | Completada | PostgreSQL, Alembic, aislamiento RLS, FKs compuestas y roles G5 |
 | F4 | Completada | JWT cerrado, `AuthContext`, membresías activas y provenance tainted |
 | F5 | Completada | Ingesta documental aislada, SHA-256, storage seguro y RLS |
 | F6 | Completada | Inspección PDF, OCR intercambiable, análisis visual y risk analyzer neutral |
@@ -18,16 +18,16 @@ ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autorida
 | F9 | Completada | Policy Engine puro, default-deny y taint-aware |
 | F10 | Completada | Holds, Kill Switch y cadena de auditoría criptográfica |
 | F11 | Completada | Security Gate, permisos internos y ejecución transaccional |
-| F12 | Completada | Router Meta multi-modo, orquestador read-only, prompts aislados y Budget Guard |
+| F12 | Completada | Router Meta multi-modo, probe Meta AI live, orquestador read-only, prompts aislados y Budget Guard |
 | F13 | Completada | API FastAPI v1, observabilidad, rate limiting y administración de seguridad |
 | F14 | Completada | Panel server-rendered seguro con Jinja2, HTMX local y aislamiento por tenant |
 | F15 | Completada | Laboratorio adversarial, cobertura T-01–T-11 y quality gates reproducibles |
 | F16 | Completada | Replay Baseline vs Protected, arranque Docker limpio y entrega reproducible |
 | F17 | Completada | Staging con Supabase, roles/RLS, Transaction Pooler, JWT del proveedor y perímetro Cloudflare documentado |
-| F18 | Completada | Arnés técnico, corpus adversarial, terminal de voz y certificación de persistencia/auditoría |
+| F18 | Completada | Arnés técnico, corpus adversarial, aislamiento RLS en PostgreSQL, probe Meta AI live, terminal de voz y certificación de persistencia/auditoría |
 
 La percepción documental se ejecuta in-process con políticas de contención y aislamiento en Docker definidas para despliegue en daemon; el worker aislado sigue pendiente de una validación operacional del daemon en este entorno.
-El benchmark oficial contiene 7 vectores sintéticos: 1 benigno permitido y 6 adversariales bloqueados (2 `QUARANTINE`, 5 `DENY`), sin falsos positivos.
+Resultado del laboratorio adversarial: 7 de 7 vectores neutralizados (2 `QUARANTINE`, 5 `DENY`) y 0 falsos positivos.
 
 ## Requisitos previos
 

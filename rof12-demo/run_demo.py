@@ -9,8 +9,11 @@
   python run_demo.py audit [--tamper-test]
 """
 import argparse, os, sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+DEMO_ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(DEMO_ROOT.parent))
+sys.path.insert(1, str(DEMO_ROOT))
 from rof12.ui import UI
 from rof12.demos import Ctx, HERE, audit_cmd, demo1, demo2, demo3
 

@@ -9,6 +9,7 @@ offline and deterministic.
 from __future__ import annotations
 
 import re
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -75,6 +76,9 @@ def _resolve_voice(preferred: str) -> str | None:
 
 
 def _legacy_speak(text: str) -> None:
+    if shutil.which("say") is None:
+        print(f"[AUDIO NOTICE] No hay reproductor de voz disponible: {text}")
+        return
     selected = _resolve_voice(FALLBACK_VOICE)
     command = ["say"]
     if selected:
@@ -98,7 +102,11 @@ def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
             timeout=20,
         )
         if result.returncode == 0 and ALERT_AUDIO_PATH.exists() and ALERT_AUDIO_PATH.stat().st_size > 0:
-            playback = subprocess.run(["afplay", str(ALERT_AUDIO_PATH)], check=False)
+            player = shutil.which("afplay")
+            if not player:
+                print(f"[AUDIO NOTICE] afplay no está disponible; texto: {text}")
+                return
+            playback = subprocess.run([player, str(ALERT_AUDIO_PATH)], check=False)
             if playback.returncode == 0:
                 return
     except (OSError, subprocess.SubprocessError):
@@ -193,6 +201,10 @@ def parse_command(text: str, **kwargs) -> VoiceProposal:
     return parse_proposal(text, **kwargs)
 
 
-def approval_from_text(text: str) -> bool:
-    """Return True only for an explicit approval word; everything else denies."""
-    return text.strip().casefold() in {"autorizar", "autorizo", "aprobar", "apruebo", "sí", "si"}
+def approval_from_text(text: str, hold_id: str | None = None) -> bool:
+    """Accept only a structured confirmation bound to the displayed hold."""
+    normalized = " ".join(text.strip().casefold().split())
+    if not hold_id:
+        return normalized in {"autorizar", "autorizo", "aprobar", "apruebo", "sí", "si"}
+    token = hold_id.casefold()
+    return normalized in {f"confirmar hold {token}", f"autorizar hold {token}", f"aprobar hold {token}"}
