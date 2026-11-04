@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 from rof12.adapters.voice_adapter import (  # noqa: E402
     approval_from_text,
+    DEFAULT_VOICE,
     listen_text,
     parse_command,
     parse_proposal,
@@ -64,7 +65,7 @@ def _persist_supabase(decision, proposal, audit_hash: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description="ROF12 voice terminal")
     parser.add_argument("--keyboard", action="store_true", help="usar teclado sin intentar micrófono")
-    parser.add_argument("--voice", default="Paulina", help="voz macOS para say")
+    parser.add_argument("--voice", default=DEFAULT_VOICE, help="voz Edge-TTS; fallback macOS say")
     parser.add_argument("--no-speech", action="store_true", help="no invocar say; útil para pruebas")
     parser.add_argument("--audit-path", default=str(ROOT / "rof12-demo" / "out" / "voice_audit.jsonl"))
     args = parser.parse_args()
@@ -86,9 +87,9 @@ def main() -> int:
             print(f"[KEYBOARD FALLBACK] {exc}")
             return input(prompt + " [teclado] ")
 
-    def announce(decision: str) -> None:
+    def announce(decision: str, codes=None) -> None:
         if not args.no_speech:
-            speak_decision(decision, lambda message: speak(message, args.voice))
+            speak_decision(decision, lambda message: speak(message, args.voice), codes=codes)
 
     def announce_invalid() -> None:
         print("Uso: reembolsa Q45.00 en la orden ORD-7731 con motivo de disputa.")
@@ -112,7 +113,7 @@ def main() -> int:
             decision = gate.evaluate(proposal)
             event_hash = audit.records()[-1]["hash"]
             print(f"Gate: {decision.decision} codes={decision.codes or ['-']} sha256={event_hash}")
-            announce(decision.decision)
+            announce(decision.decision, decision.codes)
             if decision.hold_id:
                 answer = get_text("Respuesta (autorizar/cancelar)> ")
                 approved = approval_from_text(answer)
@@ -120,7 +121,7 @@ def main() -> int:
                 if approved:
                     decision = gate.resume(decision.hold_id, proposal)
                     print(f"Revalidación: {decision.decision} codes={decision.codes or ['-']}")
-                    announce(decision.decision)
+                    announce(decision.decision, decision.codes)
             if decision.decision == "ALLOW" and decision.permit:
                 result = gate.execute(runtime, proposal, decision.permit)
                 print(f"Ejecución: {result}")

@@ -10,19 +10,24 @@ from __future__ import annotations
 
 import re
 import subprocess
+import sys
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from typing import Callable
+from pathlib import Path
 
 
 DECISION_MESSAGES = {
-    "ALLOW": "Acción autorizada. Permiso HMAC emitido.",
+    "ALLOW": "Acción autorizada. Permiso HMAC emitido por SecurityGate.",
     "DENY": "Acción denegada por política determinista.",
-    "QUARANTINE": "Peligro. Inyección detectada. Documento en cuarentena.",
+    "DENY_ORDER_NOT_FOUND": "Acción denegada por SecurityGate. La orden especificada no existe.",
+    "QUARANTINE": "Alerta de seguridad. Inyección detectada. Documento en cuarentena.",
     "HOLD": "Atención. Operación retenida. ¿Desea autorizar la ejecución?",
     "REQUIRE_APPROVAL": "Atención. Operación retenida. ¿Desea autorizar la ejecución?",
 }
-DEFAULT_VOICE = "Paulina"
+DEFAULT_VOICE = "es-MX-JorgeNeural"
+FALLBACK_VOICE = "Paulina"
+ALERT_AUDIO_PATH = Path("/tmp/rof12_alert.mp3")
 INVALID_COMMAND_MESSAGE = "No pude interpretar la orden. Por favor especifique el monto y el identificador."
 
 
@@ -61,11 +66,8 @@ def _resolve_voice(preferred: str) -> str | None:
     return spanish
 
 
-def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
-    """Speak using Paulina, a Spanish voice, or macOS's default voice."""
-    if not text or len(text) > 500:
-        raise ValueError("speech text must be between 1 and 500 characters")
-    selected = _resolve_voice(voice)
+def _legacy_speak(text: str) -> None:
+    selected = _resolve_voice(FALLBACK_VOICE)
     command = ["say"]
     if selected:
         command.extend(["-v", selected])
@@ -73,14 +75,38 @@ def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
     try:
         subprocess.run(command, check=False)
     except OSError:
-        # Audio is optional; the caller still receives the Gate decision.
         return
 
 
-def speak_decision(decision: str, speaker: Callable[[str], None] = speak) -> str:
-    """Speak the fixed message associated with a Gate decision."""
+def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
+    """Synthesize neural speech with Edge-TTS, falling back to macOS ``say``."""
+    if not text or len(text) > 500:
+        raise ValueError("speech text must be between 1 and 500 characters")
+    try:
+        ALERT_AUDIO_PATH.unlink(missing_ok=True)
+        result = subprocess.run(
+            [sys.executable, "-m", "edge_tts", "--voice", voice, "--text", text, "--write-media", str(ALERT_AUDIO_PATH)],
+            check=False,
+            timeout=20,
+        )
+        if result.returncode == 0 and ALERT_AUDIO_PATH.exists() and ALERT_AUDIO_PATH.stat().st_size > 0:
+            subprocess.run(["afplay", "/tmp/rof12_alert.mp3"], check=False)
+            return
+    except (OSError, subprocess.SubprocessError):
+        pass
+    _legacy_speak(text)
+
+
+def speak_decision(
+    decision: str,
+    speaker: Callable[[str], None] = speak,
+    codes: list[str] | tuple[str, ...] | None = None,
+) -> str:
+    """Speak a contextual, fixed message associated with a Gate decision."""
     normalized = decision.upper()
-    message = DECISION_MESSAGES.get(normalized, DECISION_MESSAGES["DENY"])
+    code_set = {str(code).upper() for code in (codes or ())}
+    key = "DENY_ORDER_NOT_FOUND" if normalized == "DENY" and "ORDER_NOT_FOUND" in code_set else normalized
+    message = DECISION_MESSAGES.get(key, DECISION_MESSAGES["DENY"])
     speaker(message)
     return message
 
