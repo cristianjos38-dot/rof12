@@ -16,7 +16,10 @@ sys.path.insert(0, str(ROOT))
 from rof12.adapters.voice_adapter import (  # noqa: E402
     approval_from_text,
     listen_text,
+    parse_command,
     parse_proposal,
+    INVALID_COMMAND_MESSAGE,
+    speak,
     speak_decision,
 )
 from rof12.audit import Audit  # noqa: E402
@@ -61,7 +64,7 @@ def _persist_supabase(decision, proposal, audit_hash: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description="ROF12 voice terminal")
     parser.add_argument("--keyboard", action="store_true", help="usar teclado sin intentar micrófono")
-    parser.add_argument("--voice", default="Monica", help="voz macOS para say")
+    parser.add_argument("--voice", default="Paulina", help="voz macOS para say")
     parser.add_argument("--no-speech", action="store_true", help="no invocar say; útil para pruebas")
     parser.add_argument("--audit-path", default=str(ROOT / "rof12-demo" / "out" / "voice_audit.jsonl"))
     args = parser.parse_args()
@@ -85,7 +88,13 @@ def main() -> int:
 
     def announce(decision: str) -> None:
         if not args.no_speech:
-            speak_decision(decision, lambda message: __import__("subprocess").run(["say", "-v", args.voice, message], check=False))
+            speak_decision(decision, lambda message: speak(message, args.voice))
+
+    def announce_invalid() -> None:
+        print("Uso: reembolsa Q45.00 en la orden ORD-7731 con motivo de disputa.")
+        print("También acepta: reembolsar $45, devolver USD 45, procesar reembolso 45 EUR.")
+        if not args.no_speech:
+            speak(INVALID_COMMAND_MESSAGE, args.voice)
 
     while True:
         try:
@@ -119,6 +128,8 @@ def main() -> int:
             print(f"Audit SHA-256: {event_hash} · Supabase={'OK' if persisted else 'no configurado'}")
         except ValueError as exc:
             print(f"[INPUT REJECTED] {exc}")
+            print(INVALID_COMMAND_MESSAGE)
+            announce_invalid()
 
 
 if __name__ == "__main__":

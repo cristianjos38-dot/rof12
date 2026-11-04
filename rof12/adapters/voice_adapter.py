@@ -22,6 +22,8 @@ DECISION_MESSAGES = {
     "HOLD": "Atención. Operación retenida. ¿Desea autorizar la ejecución?",
     "REQUIRE_APPROVAL": "Atención. Operación retenida. ¿Desea autorizar la ejecución?",
 }
+DEFAULT_VOICE = "Paulina"
+INVALID_COMMAND_MESSAGE = "No pude interpretar la orden. Por favor especifique el monto y el identificador."
 
 
 @dataclass(frozen=True)
@@ -36,11 +38,43 @@ class VoiceProposal:
     tenant_id: str
 
 
-def speak(text: str, voice: str = "Monica") -> None:
-    """Speak a bounded, caller-provided status message using macOS ``say``."""
+def _installed_voices() -> list[tuple[str, bool]]:
+    try:
+        result = subprocess.run(["say", "-v", "?"], capture_output=True, text=True, check=False)
+    except OSError:
+        return []
+    voices: list[tuple[str, bool]] = []
+    for line in (result.stdout or "").splitlines():
+        fields = line.strip().split(maxsplit=1) if line.strip() else []
+        name = fields[0] if fields else ""
+        if name:
+            voices.append((name, "es_" in line))
+    return voices
+
+
+def _resolve_voice(preferred: str) -> str | None:
+    installed = _installed_voices()
+    names = {name for name, _ in installed}
+    if preferred in names:
+        return preferred
+    spanish = next((name for name, is_spanish in installed if is_spanish), None)
+    return spanish
+
+
+def speak(text: str, voice: str = DEFAULT_VOICE) -> None:
+    """Speak using Paulina, a Spanish voice, or macOS's default voice."""
     if not text or len(text) > 500:
         raise ValueError("speech text must be between 1 and 500 characters")
-    subprocess.run(["say", "-v", voice, text], check=False)
+    selected = _resolve_voice(voice)
+    command = ["say"]
+    if selected:
+        command.extend(["-v", selected])
+    command.append(text)
+    try:
+        subprocess.run(command, check=False)
+    except OSError:
+        # Audio is optional; the caller still receives the Gate decision.
+        return
 
 
 def speak_decision(decision: str, speaker: Callable[[str], None] = speak) -> str:
@@ -87,7 +121,12 @@ def parse_proposal(
     lowered = text.casefold()
     if any(marker in lowered for marker in ("exporta", "exportar", "base de datos", "shell", "terminal")):
         return VoiceProposal(task_id, agent, "db.export_customers", {"destination": "voice-request"}, text, tenant_id)
-    amount_match = re.search(r"(?:q|\$|usd\s*)\s*([0-9]+(?:[.,][0-9]{1,2})?)", lowered)
+    if not re.search(r"\b(reembols(?:a|ar)|devolver|procesar\s+reembolso)\b", lowered):
+        raise ValueError("usa una acción como reembolsa, devolver o procesar reembolso")
+    amount_match = re.search(
+        r"(?<![\w.-])(?:(?:q|gtq|usd|eur)\s*|\$\s*)?([0-9]+(?:[.,][0-9]{1,2})?)(?![\w.])",
+        lowered,
+    )
     order_match = re.search(r"(?:orden|order)\s*([a-z0-9-]+)", lowered, re.IGNORECASE)
     if not amount_match or not order_match:
         raise ValueError("usa, por ejemplo: reembolsa Q45.00 en la orden ORD-7731")
@@ -101,10 +140,15 @@ def parse_proposal(
         task_id,
         agent,
         "refunds.create",
-        {"order_id": order_match.group(1).upper(), "amount": amount, "reason": "propuesta recibida por voz"},
+        {"order_id": order_match.group(1).upper(), "amount": amount, "reason": text.strip()},
         text,
         tenant_id,
     )
+
+
+def parse_command(text: str, **kwargs) -> VoiceProposal:
+    """Public parser name used by terminal integrations."""
+    return parse_proposal(text, **kwargs)
 
 
 def approval_from_text(text: str) -> bool:

@@ -9,3 +9,7 @@ from pathlib import Path
 _demo_package = Path(__file__).resolve().parents[1] / "rof12-demo" / "rof12"
 if _demo_package.is_dir() and str(_demo_package) not in __path__:
     __path__.append(str(_demo_package))
+
+from .core import GateDecision, GateExecutionPermit, Proposal, SecurityGate, protect
+
+__all__ = ["SecurityGate", "Proposal", "GateDecision", "GateExecutionPermit", "protect"]
