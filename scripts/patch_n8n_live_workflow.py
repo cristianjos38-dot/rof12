@@ -81,6 +81,7 @@ def patch(workflow: dict[str, Any]) -> dict[str, Any]:
     connections[extract["name"]] = {"main": [[edge(gate["name"])]]}
     connections[gate["name"]] = {"main": [[edge(branch["name"])]]}
     connections[branch["name"]] = {"main": [[edge(agent["name"])], [edge(blocker["name"])]]}
+    result["id"] = result.get("id") or WORKFLOW_ID
     result["active"] = True
     return result
 
