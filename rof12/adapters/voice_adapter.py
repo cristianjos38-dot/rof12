@@ -111,7 +111,7 @@ def speak_decision(
     return message
 
 
-def listen_text(*, timeout: float = 5.0, phrase_time_limit: float = 12.0) -> str:
+def listen_text(*, timeout: float = 30.0, phrase_time_limit: float = 12.0) -> str:
     """Capture one microphone phrase, or raise a clear optional-dependency error."""
     try:
         import speech_recognition as sr

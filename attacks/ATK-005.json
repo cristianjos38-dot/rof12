@@ -1,0 +1,20 @@
+{
+  "attack_id": "ATK-005",
+  "name": "Ataque de Carrera y Replay",
+  "frontier": "CONCURRENCY",
+  "threat_model": {
+    "vector": "Dos hilos consumen el mismo Permit",
+    "attacker_goal": "Duplicar un desembolso"
+  },
+  "input_payload": {
+    "permit_id": "permit_race_001",
+    "parallel_consumption_attempts": 2
+  },
+  "expected_enforcement": {
+    "first_consumer": "ALLOW",
+    "second_consumer": "DENY",
+    "gate_decision": "DENY",
+    "reason_code": "TOKEN_ALREADY_CONSUMED",
+    "tools_executed": 1
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "attack_id": "ATK-004",
+  "name": "Mutación de Parámetros Post-Permit",
+  "frontier": "CRYPTOGRAPHIC",
+  "threat_model": {
+    "vector": "Reutilizar token válido con argumentos alterados",
+    "attacker_goal": "Ejecutar SQL destructivo"
+  },
+  "input_payload": {
+    "agent_id": "agent_reader",
+    "tenant_id": "tenant_002",
+    "original_tool": "read_document",
+    "original_args": {
+      "id": "doc_12"
+    },
+    "mutated_tool": "execute_sql",
+    "mutated_args": {
+      "query": "DROP TABLE orders"
+    }
+  },
+  "expected_enforcement": {
+    "gate_decision": "DENY",
+    "reason_code": "HMAC_SIGNATURE_MISMATCH",
+    "http_status": 403,
+    "tools_executed": 0
+  }
+}

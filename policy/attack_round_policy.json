@@ -1,0 +1,18 @@
+{
+  "currency": "USD",
+  "max_transfer_amount": 50000,
+  "high_risk_requires_human_approval": true,
+  "permit_ttl_seconds": 120,
+  "allowed_tools": [
+    "read_document",
+    "lookup_invoice",
+    "create_payment_proposal"
+  ],
+  "blocked_tools": [
+    "execute_sql"
+  ],
+  "audit": {
+    "hash": "sha256",
+    "chain": true
+  }
+}

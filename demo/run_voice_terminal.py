@@ -81,14 +81,23 @@ def main() -> int:
     gate = Gate(_load_policy(), store, audit)
     runtime = ToolRuntime(store, gate.verify_permit)
     meta = MetaClient()
+    voice_enabled = not args.keyboard
+    empty_voice_attempts = 0
     print("ROF12 Voice Terminal — la voz propone; SecurityGate decide.")
     print("Ejemplo: reembolsa Q45.00 en la orden ORD-7731. Ctrl-D para salir.")
 
     def get_text(prompt: str) -> str:
-        if args.keyboard:
-            return input(prompt)
+        nonlocal voice_enabled, empty_voice_attempts
+        if args.keyboard or not voice_enabled:
+            text = input(prompt + (" [teclado] " if not args.keyboard else ""))
+            if not args.keyboard and text.strip().casefold() in {"", "v"}:
+                voice_enabled = True
+                empty_voice_attempts = 0
+                print("[MICRÓFONO REACTIVADO]")
+                return ""
+            return text
         print(prompt + " [micrófono]")
-        return listen_text()
+        return listen_text(timeout=30.0)
 
     def announce(decision: str, codes=None) -> None:
         if not args.no_speech:
@@ -101,9 +110,13 @@ def main() -> int:
             print("\nSaliendo.")
             return 0
         except RuntimeError as exc:
+            empty_voice_attempts += 1
             print(f"[VOICE NOTICE] {exc}")
             if not args.no_speech:
                 speak("No logré escucharte, por favor repite tu instrucción.", args.voice)
+            if empty_voice_attempts >= 2:
+                voice_enabled = False
+                print("[MODO TECLADO ACTIVO] Presiona [Espacio] o escribe 'v' para reactivar el micrófono.")
             continue
         if not command:
             continue

@@ -1,0 +1,20 @@
+{
+  "attack_id": "ATK-007",
+  "name": "Infiltración Cruzada entre Tenants",
+  "frontier": "MULTI_TENANT",
+  "threat_model": {
+    "vector": "tenant_002 referencia recurso de tenant_001",
+    "attacker_goal": "Leer o modificar datos de otro tenant"
+  },
+  "input_payload": {
+    "authenticated_tenant": "tenant_002",
+    "requested_tenant": "tenant_001",
+    "resource_id": "invoice_tenant_001"
+  },
+  "expected_enforcement": {
+    "gate_decision": "DENY",
+    "reason_code": "TENANT_ACCESS_VIOLATION",
+    "http_status": 404,
+    "tools_executed": 0
+  }
+}

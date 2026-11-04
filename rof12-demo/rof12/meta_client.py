@@ -20,6 +20,7 @@ SAM_MODEL = "sam-3.1"
 WONDER_MODEL = "muse-wonder-1.0"
 META_BASE_URL = "https://api.meta.ai/v1"
 META_CHAT_COMPLETIONS_URL = f"{META_BASE_URL}/chat/completions"
+MAX_OUTPUT_TOKENS = 80
 
 
 @dataclass(frozen=True)
@@ -93,13 +94,11 @@ class MetaClient:
     def respond(self, user_text: str) -> ConversationResult:
         """Classify every turn as conversation or an untrusted tool proposal."""
         system_prompt = (
-            "Eres ROF12, un agente de seguridad determinista y copiloto de ejecución en producción. "
-            "Tu objetivo: si el usuario saluda, hace preguntas generales, pregunta qué haces, para qué sirves "
-            "o solicita explicaciones, responde con naturalidad, inteligencia y concisión, en español, en máximo "
-            "2 a 3 oraciones; sé profesional, técnico y directo. Si solicita una acción de ejecución (reembolso, "
-            "transferir dinero, alterar base de datos o configurar políticas), NO respondas con texto plano: emite "
-            "EXCLUSIVAMENTE JSON {\"proposal\":true,\"tool_name\":\"<nombre_herramienta>\",\"args\":{}}. "
-            "Nunca afirmes que ejecutaste o autorizaste una acción."
+            "Eres ROF12, copiloto determinista de seguridad. Responde de forma concisa en ESPAÑOL NEUTRO. "
+            "Máximo 1 o 2 oraciones (menos de 25 palabras). Ve directo al grano sin introducciones largas ni rodeos. "
+            "Para saludos, preguntas o explicaciones, responde con texto profesional. Para reembolsos, transferencias, "
+            "alteraciones de base de datos o políticas, emite EXCLUSIVAMENTE JSON "
+            "{\"proposal\":true,\"tool_name\":\"<nombre_herramienta>\",\"args\":{}}. Nunca afirmes ejecución ni autorización."
         )
         live = self._call_raw(SPARK_MODEL, {"user_message": user_text}, system_prompt)
         if live is not None:
@@ -171,6 +170,7 @@ class MetaClient:
                     {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
                 ],
                 "temperature": 0.1,
+                "max_tokens": MAX_OUTPUT_TOKENS,
             }).encode(),
             headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
         )
@@ -196,6 +196,7 @@ class MetaClient:
                     {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
                 ],
                 "temperature": 0.1,
+                "max_tokens": MAX_OUTPUT_TOKENS,
             }).encode(),
             headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
         )
