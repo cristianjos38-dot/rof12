@@ -7,6 +7,7 @@ browser field is visibly focused. This utility never reads or prints secrets.
 from __future__ import annotations
 
 import argparse
+import json
 import random
 import subprocess
 import time
@@ -20,7 +21,9 @@ def type_human(text: str, *, send: bool = False, seed: int | None = None) -> Non
         print(f"[DRY RUN] {text}")
         return
     for character in text:
-        script = f'tell application "System Events" to keystroke {character!r}'
+        # JSON string quoting is compatible with AppleScript string literals
+        # for printable Unicode characters, including apostrophes.
+        script = f'tell application "System Events" to keystroke {json.dumps(character, ensure_ascii=False)}'
         subprocess.run(["osascript", "-e", script], check=True)
         time.sleep(rng.uniform(0.05, 0.10))
 
