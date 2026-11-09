@@ -76,3 +76,9 @@ configurado activa el exportador OTLP HTTP. La autenticación acepta únicamente
 el claim opcional `agent_id`, mientras tenant, rol y membresía siguen siendo
 resueltos en servidor. `docs/IDENTITY.md` documenta la costura futura con
 Microsoft Entra Agent ID sin implementar Entra.
+
+Se añadió el scaffold `azure/` + `azure.yaml` para Container Apps, PostgreSQL
+Flexible Server, Key Vault y Log Analytics, además de `docs/DEPLOY_AZURE.md`.
+No contiene secretos; `azd up` queda pendiente de una suscripción Azure
+autorizada. `docs/A2A_DESIGN.md` documenta el límite de autoridad para futuras
+integraciones A2A.
