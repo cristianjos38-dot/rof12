@@ -1,6 +1,7 @@
 import secrets
 
 from app.security.policy_engine import GateDecision, PolicyResult, evaluate
+from app.observability import observe_decision
 from app.tools.registry import is_registered
 
 _PERMIT_TOKEN = object()
@@ -35,8 +36,12 @@ class SecurityGate:
 
     def evaluate(self, ctx, request, capability, provenance, risk_report, verity_result, system_state):
         if not is_registered(getattr(request, "tool_name", "refund_service")):
-            return PolicyResult(GateDecision.DENY, ("UNKNOWN_TOOL",), {"action": False})
-        return evaluate(ctx, request, capability, provenance, risk_report, verity_result, system_state)
+            result = PolicyResult(GateDecision.DENY, ("UNKNOWN_TOOL",), {"action": False})
+            observe_decision(ctx, result)
+            return result
+        result = evaluate(ctx, request, capability, provenance, risk_report, verity_result, system_state)
+        observe_decision(ctx, result)
+        return result
 
     def mint_if_allowed(self, result: PolicyResult) -> GateExecutionPermit:
         return self._mint(result)

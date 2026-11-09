@@ -69,3 +69,10 @@ ejecución de herramientas ni bypass de política. `scripts/mcp_smoke.py` verifi
 registrada. Se añadieron `docs/MCP.md` y `examples/mcp_client.py`. Las
 dependencias MCP y OpenTelemetry quedaron declaradas en el paquete y
 `pip-audit` local no reportó vulnerabilidades.
+
+Se añadió `app.observability` con spans y contadores por decisión. El SDK API
+queda no-op cuando no existe `OTEL_EXPORTER_OTLP_ENDPOINT`; con endpoint
+configurado activa el exportador OTLP HTTP. La autenticación acepta únicamente
+el claim opcional `agent_id`, mientras tenant, rol y membresía siguen siendo
+resueltos en servidor. `docs/IDENTITY.md` documenta la costura futura con
+Microsoft Entra Agent ID sin implementar Entra.
