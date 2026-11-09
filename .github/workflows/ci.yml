@@ -56,7 +56,7 @@ jobs:
       - name: Apply migrations and seed fixtures
         run: alembic upgrade head && python scripts/seed.py
       - name: Verify
-        run: make check
+        run: make PYTHON=python check
       - name: Replay protected corpus against PostgreSQL
         run: |
           python -m demo.replay --database-url "$DATABASE_OWNER_URL" --json > /tmp/rof12-replay.json
@@ -66,7 +66,7 @@ jobs:
           rows = json.loads(Path('/tmp/rof12-replay.json').read_text())['results']
           protected = [row for row in rows if row['mode'] == 'PROTECTED']
           assert len(protected) == 7, len(protected)
-          assert sum(row['decision'] in {'DENY', 'QUARANTINE'} for row in protected) == 7
+          assert sum(row['decision'] in {'DENY', 'QUARANTINE'} for row in protected) == 6
           assert sum(row['decision'] == 'ALLOW' for row in protected) == 1
           assert sum(row['decision'] == 'QUARANTINE' for row in protected) == 6
           assert sum(row['decision'] == 'DENY' for row in protected) == 0

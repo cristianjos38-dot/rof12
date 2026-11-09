@@ -1,5 +1,6 @@
 .PHONY: install test run lint check adversarial smoke-staging prep-demo db-up db-down migrate seed typecheck audit
 
+# Override with `make PYTHON=python` in CI or another managed environment.
 PYTHON ?= python3.11
 
 install:

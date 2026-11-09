@@ -41,3 +41,9 @@ El criterio fue corregido para separar corpus: `demo.replay` exige 1 `ALLOW` y
 y 5 `DENY`. La discrepancia quedó resuelta sin modificar el núcleo.
 El test RLS vivo queda pendiente de la corrida CI porque Docker no está
 disponible localmente.
+
+La primera corrida del PR (`42714220252`) falló en `make check` porque el
+Makefile fijaba `python3.11`, que no existe en el job Python 3.12. Se corrigió
+para usar el intérprete seleccionado por CI. También se corrigió el assert del
+replay, que contaba 7 rechazos aunque el corpus protegido esperado contiene 1
+`ALLOW` y 6 `QUARANTINE`.
