@@ -15,5 +15,6 @@ python scripts/mcp_smoke.py
 python -m rof12.mcp_server
 ```
 
-The MCP transport is stdio. Tenant and user values are explicit only in this
-local smoke harness; production integrations must resolve them server-side.
+The MCP transport is stdio. Tenant and user values are process-owned server
+context (`ROF12_MCP_TENANT_ID` and `ROF12_MCP_USER_ID` in the local harness),
+never tool arguments supplied by the agent.

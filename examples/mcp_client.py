@@ -15,8 +15,6 @@ async def main() -> None:
                 "evaluate_proposal",
                 arguments={
                     "proposal": {"tool_name": "refund_service", "args": {}},
-                    "tenant_id": "tenant_001",
-                    "user_id": "user_001",
                 },
             )
             print(result)

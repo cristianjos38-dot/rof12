@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from types import SimpleNamespace
 from typing import Any
 
@@ -37,11 +38,9 @@ def _evaluate(proposal: dict[str, Any], tenant_id: str, user_id: str) -> Any:
 
 
 @mcp.tool()
-def evaluate_proposal(
-    proposal: dict[str, Any], tenant_id: str, user_id: str
-) -> dict[str, Any]:
+def evaluate_proposal(proposal: dict[str, Any]) -> dict[str, Any]:
     """Evaluate a proposal without executing any tool or issuing authority."""
-    result = _evaluate(proposal, tenant_id, user_id)
+    result = _evaluate(proposal, os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", ""))
     return {
         "decision": result.decision.value,
         "reasons": list(result.reasons),
@@ -50,9 +49,9 @@ def evaluate_proposal(
 
 
 @mcp.tool()
-def request_permit(proposal: dict[str, Any], tenant_id: str, user_id: str) -> dict[str, Any]:
+def request_permit(proposal: dict[str, Any]) -> dict[str, Any]:
     """Mint an opaque permit only when the existing Gate returns ALLOW."""
-    result = _evaluate(proposal, tenant_id, user_id)
+    result = _evaluate(proposal, os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", ""))
     if result.decision.value != "ALLOW":
         return {"decision": result.decision.value, "reasons": list(result.reasons)}
     permit = SecurityGate().mint_if_allowed(result)
