@@ -59,3 +59,13 @@ secuencias PostgreSQL, produciendo `503` en las rutas de tareas. También mostr�
 que el test RLS consultaba el tenant equivocado en la sesión. Se añadió la
 migración `0008_grant_sequence_usage` y se corrigió el test para mantener fija
 la identidad de sesión al comprobar lecturas cruzadas.
+
+## Fase 2 — puente MCP
+
+Se añadió `rof12/mcp_server.py` con el SDK oficial MCP y dos herramientas:
+`evaluate_proposal` y `request_permit`. Ambas reutilizan `SecurityGate`; no hay
+ejecución de herramientas ni bypass de política. `scripts/mcp_smoke.py` verificó
+`ALLOW` para `refund_service` y `DENY/UNKNOWN_TOOL` para una herramienta no
+registrada. Se añadieron `docs/MCP.md` y `examples/mcp_client.py`. Las
+dependencias MCP y OpenTelemetry quedaron declaradas en el paquete y
+`pip-audit` local no reportó vulnerabilidades.
