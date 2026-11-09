@@ -26,3 +26,18 @@ Validado localmente el 2026-11-04 con Python 3.11 y `MODEL_MODE=mock`:
 
 No se modificaron los contratos congelados de `app/domain/`. Las pruebas de
 PostgreSQL vivo, RLS operacional y replay 7/7 quedan para la Fase 1.
+
+## Fase 1 — cerrada localmente; CI pendiente
+
+Se prepararon el servicio PostgreSQL 16 y el test `tests/security/test_rls_live.py`
+para CI, además de `scripts/bench_gate.py`. La validación local no pudo levantar
+Docker en este equipo. El benchmark determinista local sí se ejecutó con 1.000
+decisiones en modo mock: promedio 0.0021 ms, p50 0.0021 ms y p95 0.0022 ms en
+macOS 26.6.2 arm64, Python 3.11.15. El replay de ataque local pasó: 2
+`QUARANTINE` y 5 `DENY`, con cadena de auditoría válida.
+
+El criterio fue corregido para separar corpus: `demo.replay` exige 1 `ALLOW` y
+6 `QUARANTINE`, mientras `scripts/run_attack_round.py` exige 2 `QUARANTINE`
+y 5 `DENY`. La discrepancia quedó resuelta sin modificar el núcleo.
+El test RLS vivo queda pendiente de la corrida CI porque Docker no está
+disponible localmente.
