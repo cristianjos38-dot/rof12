@@ -3,8 +3,8 @@
 from alembic import op
 
 
-revision = "0008_grant_sequence_usage"
-down_revision = "0007_add_model_usage"
+revision = "0009_grant_sequence_usage"
+down_revision = "0008_add_model_usage_request_id"
 branch_labels = None
 depends_on = None
 
