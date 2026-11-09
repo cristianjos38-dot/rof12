@@ -52,3 +52,10 @@ La segunda corrida (`42715440117`) confirmó que el intérprete ya era portable,
 pero `pip-audit` encontró `setuptools 79.0.1` en los runners. Se fijó
 `setuptools>=84.1.0` en el build system y se añadió una actualización explícita
 antes de instalar el proyecto en CI.
+
+La tercera corrida (`42715663232`) pasó auditoría y análisis estático, pero
+falló al persistir eventos con el rol `rof12_app`: faltaba `USAGE` sobre las
+secuencias PostgreSQL, produciendo `503` en las rutas de tareas. También mostró
+que el test RLS consultaba el tenant equivocado en la sesión. Se añadió la
+migración `0008_grant_sequence_usage` y se corrigió el test para mantener fija
+la identidad de sesión al comprobar lecturas cruzadas.
