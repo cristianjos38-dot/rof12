@@ -47,3 +47,8 @@ Makefile fijaba `python3.11`, que no existe en el job Python 3.12. Se corrigió
 para usar el intérprete seleccionado por CI. También se corrigió el assert del
 replay, que contaba 7 rechazos aunque el corpus protegido esperado contiene 1
 `ALLOW` y 6 `QUARANTINE`.
+
+La segunda corrida (`42715440117`) confirmó que el intérprete ya era portable,
+pero `pip-audit` encontró `setuptools 79.0.1` en los runners. Se fijó
+`setuptools>=84.1.0` en el build system y se añadió una actualización explícita
+antes de instalar el proyecto en CI.

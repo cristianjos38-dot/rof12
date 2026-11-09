@@ -41,7 +41,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - name: Install project
-        run: python -m pip install -e '.[dev]'
+        run: |
+          python -m pip install --upgrade "setuptools>=84.1.0"
+          python -m pip install -e '.[dev]'
       - name: Bootstrap database roles
         env:
           PGPASSWORD: postgres_dev_only
