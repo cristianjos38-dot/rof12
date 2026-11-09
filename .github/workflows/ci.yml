@@ -57,6 +57,8 @@ jobs:
           SQL
       - name: Apply migrations and seed fixtures
         run: alembic upgrade head && python scripts/seed.py
+      - name: Build hardened image
+        run: docker build --tag rof12-ci .
       - name: Verify
         run: make PYTHON=python check
       - name: Replay protected corpus against PostgreSQL

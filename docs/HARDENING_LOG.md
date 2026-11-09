@@ -83,6 +83,17 @@ No contiene secretos; `azd up` queda pendiente de una suscripción Azure
 autorizada. `docs/A2A_DESIGN.md` documenta el límite de autoridad para futuras
 integraciones A2A.
 
+## Fase 3 — endurecimiento de producción
+
+Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
+digests fijados para Python y PostgreSQL. La API incorpora límite de cuerpo de
+10 MiB, endpoint Prometheus `/metrics` e idempotencia concurrente por
+`operation_id`; el test de dos hilos pasa con una sola ejecución. Se añadieron
+Gitleaks pre-commit, Dependabot, generación CycloneDX (`make sbom`) y la guía
+de backup/restore y migraciones en `docs/OPERATIONS.md`. La auditoría histórica
+con `git log --all -p -S` solo encontró placeholders y credenciales
+`*_dev_only` de CI/local, no secretos reales.
+
 ## Fase 4 — evaluación rigurosa
 
 El corpus v2 suma 25 casos documentados: 7 v1 y 18 v2. El corpus legítimo

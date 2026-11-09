@@ -1,4 +1,4 @@
-.PHONY: install test run lint check adversarial smoke-staging prep-demo db-up db-down migrate seed typecheck audit
+.PHONY: install test run lint check adversarial smoke-staging prep-demo db-up db-down migrate seed typecheck audit sbom
 
 # Override with `make PYTHON=python` in CI or another managed environment.
 PYTHON ?= python3.11
@@ -45,4 +45,7 @@ typecheck:
 
 audit:
 	$(PYTHON) -m pip_audit --skip-editable
+
+sbom:
+	$(PYTHON) -m cyclonedx_py environment --output-format JSON --output-file artifacts/sbom.json --output-reproducible
 

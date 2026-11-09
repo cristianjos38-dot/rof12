@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
+from threading import RLock
 
 from app.domain.contracts import GateResult, ServerContext, ToolRequest
 from app.domain.enums import Decision, DenyReason, QuarantineReason, RefundStatus
@@ -21,6 +22,7 @@ class OrderRecord:
 class RefundRepository:
     orders: dict[str, OrderRecord] = field(default_factory=dict)
     operation_ids: set[str] = field(default_factory=set)
+    lock: RLock = field(default_factory=RLock, repr=False)
 
     @classmethod
     def fixture(cls) -> RefundRepository:
@@ -42,27 +44,26 @@ class RefundWorkflow:
     def process(self, context: ServerContext, request: ToolRequest) -> GateResult:
         # Start denied. Every subsequent branch must explicitly establish a safer state.
         self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.DEFAULT_DENY)
-        order = self.repository.orders.get(request.order_id)
-        if order is None or not context.user_id or not context.tenant_id:
-            return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.INVALID_CONTEXT)
-        if order.contaminated:
-            return self._result(request, Decision.QUARANTINE, RefundStatus.QUARANTINED, quarantine_reason=QuarantineReason.CONTAMINATED_DATA)
-        if request.operation_id in self.repository.operation_ids:
-            return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.DUPLICATE_OPERATION)
-        if order.tenant_id != context.tenant_id:
-            return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.TENANT_MISMATCH)
-        # Balance precedes capability so an amount beyond both limits reports balance exhaustion.
-        if request.amount > order.refundable_balance:
-            return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.AMOUNT_EXCEEDS_BALANCE)
-        if request.amount > CAPABILITY_LIMIT:
-            return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.AMOUNT_EXCEEDS_CAPABILITY)
-        if request.amount > APPROVAL_THRESHOLD:
+        with self.repository.lock:
+            order = self.repository.orders.get(request.order_id)
+            if order is None or not context.user_id or not context.tenant_id:
+                return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.INVALID_CONTEXT)
+            if order.contaminated:
+                return self._result(request, Decision.QUARANTINE, RefundStatus.QUARANTINED, quarantine_reason=QuarantineReason.CONTAMINATED_DATA)
+            if request.operation_id in self.repository.operation_ids:
+                return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.DUPLICATE_OPERATION)
+            if order.tenant_id != context.tenant_id:
+                return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.TENANT_MISMATCH)
+            if request.amount > order.refundable_balance:
+                return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.AMOUNT_EXCEEDS_BALANCE)
+            if request.amount > CAPABILITY_LIMIT:
+                return self._result(request, Decision.DENY, RefundStatus.DENIED, deny_reason=DenyReason.AMOUNT_EXCEEDS_CAPABILITY)
+            if request.amount > APPROVAL_THRESHOLD:
+                self.repository.operation_ids.add(request.operation_id)
+                return self._result(request, Decision.REQUIRE_APPROVAL, RefundStatus.HELD_FOR_APPROVAL)
             self.repository.operation_ids.add(request.operation_id)
-            return self._result(request, Decision.REQUIRE_APPROVAL, RefundStatus.HELD_FOR_APPROVAL)
-
-        self.repository.operation_ids.add(request.operation_id)
-        order.refundable_balance -= request.amount
-        return self._result(request, Decision.ALLOW, RefundStatus.EXECUTED)
+            order.refundable_balance -= request.amount
+            return self._result(request, Decision.ALLOW, RefundStatus.EXECUTED)
 
     def execute_transaction(self, connection, context, request, capability, provenance, risk_report, now, capability_token):
         """The only production execution sequence; caller supplies an open DB transaction."""
