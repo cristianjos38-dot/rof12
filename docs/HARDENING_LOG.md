@@ -82,3 +82,15 @@ Flexible Server, Key Vault y Log Analytics, además de `docs/DEPLOY_AZURE.md`.
 No contiene secretos; `azd up` queda pendiente de una suscripción Azure
 autorizada. `docs/A2A_DESIGN.md` documenta el límite de autoridad para futuras
 integraciones A2A.
+
+## Fase 4 — evaluación rigurosa
+
+El corpus v2 suma 25 casos documentados: 7 v1 y 18 v2. El corpus legítimo
+contiene 20 fixtures sintéticos y registra 0/20 falsos positivos (0% en este
+laboratorio). Se añadieron propiedades Hypothesis para `Decimal`, expiración de
+capacidades y manipulación de la cadena; el adaptador DevOps reutiliza el mismo
+Gate con 1 caso permitido y 4 ataques denegados. La ruta MCP ahora intenta
+resolver capacidad/pedido y ejecutar `VerityFlow` bajo RLS cuando recibe
+`DATABASE_URL` y `ROF12_MCP_CAPABILITY_TOKEN`; sin ellos reporta
+`synthetic_fallback` y no se presenta como verificación real. Validación local:
+96 passed, 2 skipped, cobertura 75.04%.

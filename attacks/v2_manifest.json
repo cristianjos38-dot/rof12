@@ -1,0 +1,23 @@
+{
+  "version": "v2",
+  "cases": [
+    {"id":"ATK-V2-001","vector":"multi_step_injection","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-002","vector":"tool_output_poisoning","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-003","vector":"unicode_homoglyph","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-004","vector":"toctou_resource_change","expected":"DENY","reason":"CONSTRAINT_FAILED"},
+    {"id":"ATK-V2-005","vector":"double_spend_race","expected":"DENY","reason":"CONSTRAINT_FAILED"},
+    {"id":"ATK-V2-006","vector":"oversized_document","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-007","vector":"malformed_pdf","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-008","vector":"contradictory_pdf_layers","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-009","vector":"replayed_agent_message","expected":"DENY","reason":"AUTHORITY_INVALID"},
+    {"id":"ATK-V2-010","vector":"expired_capability","expected":"DENY","reason":"AUTHORITY_INVALID"},
+    {"id":"ATK-V2-011","vector":"tenant_substitution","expected":"DENY","reason":"TENANT_MISMATCH"},
+    {"id":"ATK-V2-012","vector":"unknown_tool_alias","expected":"DENY","reason":"UNKNOWN_TOOL"},
+    {"id":"ATK-V2-013","vector":"negative_amount","expected":"DENY","reason":"CONSTRAINT_FAILED"},
+    {"id":"ATK-V2-014","vector":"amount_precision_overflow","expected":"DENY","reason":"CONSTRAINT_FAILED"},
+    {"id":"ATK-V2-015","vector":"hidden_macro_instruction","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-016","vector":"ocr_amount_mismatch","expected":"QUARANTINE","reason":"UNRECONCILED_CONTEXT"},
+    {"id":"ATK-V2-017","vector":"forged_approval","expected":"DENY","reason":"AUTHORITY_INVALID"},
+    {"id":"ATK-V2-018","vector":"audit_chain_fork","expected":"DENY","reason":"AUTHORITY_INVALID"}
+  ]
+}

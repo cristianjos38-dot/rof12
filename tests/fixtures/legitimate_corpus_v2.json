@@ -1,0 +1,12 @@
+[
+  {"id":"LEG-001","document":"invoice-clean-001","expected":"ALLOW"}, {"id":"LEG-002","document":"invoice-clean-002","expected":"ALLOW"},
+  {"id":"LEG-003","document":"invoice-clean-003","expected":"ALLOW"}, {"id":"LEG-004","document":"invoice-clean-004","expected":"ALLOW"},
+  {"id":"LEG-005","document":"invoice-clean-005","expected":"ALLOW"}, {"id":"LEG-006","document":"invoice-clean-006","expected":"ALLOW"},
+  {"id":"LEG-007","document":"invoice-clean-007","expected":"ALLOW"}, {"id":"LEG-008","document":"invoice-clean-008","expected":"ALLOW"},
+  {"id":"LEG-009","document":"invoice-clean-009","expected":"ALLOW"}, {"id":"LEG-010","document":"invoice-clean-010","expected":"ALLOW"},
+  {"id":"LEG-011","document":"invoice-clean-011","expected":"ALLOW"}, {"id":"LEG-012","document":"invoice-clean-012","expected":"ALLOW"},
+  {"id":"LEG-013","document":"invoice-clean-013","expected":"ALLOW"}, {"id":"LEG-014","document":"invoice-clean-014","expected":"ALLOW"},
+  {"id":"LEG-015","document":"invoice-clean-015","expected":"ALLOW"}, {"id":"LEG-016","document":"invoice-clean-016","expected":"ALLOW"},
+  {"id":"LEG-017","document":"invoice-clean-017","expected":"ALLOW"}, {"id":"LEG-018","document":"invoice-clean-018","expected":"ALLOW"},
+  {"id":"LEG-019","document":"invoice-clean-019","expected":"ALLOW"}, {"id":"LEG-020","document":"invoice-clean-020","expected":"ALLOW"}
+]

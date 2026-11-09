@@ -18,3 +18,8 @@ python -m rof12.mcp_server
 The MCP transport is stdio. Tenant and user values are process-owned server
 context (`ROF12_MCP_TENANT_ID` and `ROF12_MCP_USER_ID` in the local harness),
 never tool arguments supplied by the agent.
+
+When `DATABASE_URL` and `ROF12_MCP_CAPABILITY_TOKEN` are configured, the
+adapter resolves the capability and order under PostgreSQL RLS and runs
+`VerityFlow` before the Gate. Without both values it reports
+`evaluation_source=synthetic_fallback` and remains non-authoritative.

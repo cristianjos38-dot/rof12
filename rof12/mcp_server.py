@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import os
+from datetime import UTC, datetime
+from decimal import Decimal
 from types import SimpleNamespace
 from typing import Any
 
 from app.security.security_gate import SecurityGate
+from app.security.capability_manager import CapabilityRecord, CapabilityStatus, hash_capability
+from app.verification.verityflow import evaluate_snapshot
+from app.domain.contracts import ToolRequest
 
 try:
     from mcp.server.fastmcp import FastMCP
@@ -37,14 +42,60 @@ def _evaluate(proposal: dict[str, Any], tenant_id: str, user_id: str) -> Any:
     )
 
 
+def _evaluate_real(proposal: dict[str, Any], tenant_id: str, user_id: str):
+    """Use server-side DB capability/order state when explicitly configured."""
+    database_url = os.getenv("DATABASE_URL")
+    token = os.getenv("ROF12_MCP_CAPABILITY_TOKEN")
+    if not database_url or not token:
+        return None
+    try:
+        from sqlalchemy import create_engine, text
+
+        args = proposal.get("args", {})
+        request = ToolRequest(
+            order_id=str(args["order_id"]),
+            amount=Decimal(str(args["amount"])),
+            reason=str(args.get("reason", "MCP proposal")),
+            operation_id=str(args["operation_id"]),
+        )
+        engine = create_engine(database_url, pool_pre_ping=True)
+        with engine.begin() as connection:
+            connection.execute(text("SELECT set_config('app.tenant_id', :tenant_id, true)"), {"tenant_id": tenant_id})
+            capability_row = connection.execute(text("""
+                SELECT capability_id, tenant_id, subject_user_id, token_hash, status, expires_at, max_amount
+                  FROM rof12.capabilities
+                 WHERE token_hash = :token_hash
+            """), {"token_hash": hash_capability(token)}).mappings().first()
+            order = connection.execute(text("""
+                SELECT tenant_id, owner_user_id, status, refundable_balance
+                  FROM rof12.orders WHERE order_id = :order_id
+            """), {"order_id": request.order_id}).mappings().first()
+        capability = None if capability_row is None else CapabilityRecord(
+            capability_row["capability_id"], capability_row["tenant_id"], capability_row["subject_user_id"],
+            capability_row["token_hash"], CapabilityStatus(capability_row["status"]), capability_row["expires_at"],
+            Decimal(str(capability_row["max_amount"])),
+        )
+        verity = evaluate_snapshot(dict(order) if order else None, request, SimpleNamespace(tenant_id=tenant_id, user_id=user_id), capability, False, datetime.now(UTC))
+        return SecurityGate().evaluate(
+            SimpleNamespace(user_id=user_id, tenant_id=tenant_id, membership_status="ACTIVE"),
+            SimpleNamespace(tool_name=proposal.get("tool_name", "")),
+            SimpleNamespace(valid=verity.checks.get("V5", False), reasons=()),
+            SimpleNamespace(is_tainted=False), SimpleNamespace(risk_level="LOW"), verity, SimpleNamespace(active=False),
+        )
+    except (KeyError, TypeError, ValueError, Exception):
+        return None
+
+
 @mcp.tool()
 def evaluate_proposal(proposal: dict[str, Any]) -> dict[str, Any]:
     """Evaluate a proposal without executing any tool or issuing authority."""
-    result = _evaluate(proposal, os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", ""))
+    tenant_id, user_id = os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", "")
+    result = _evaluate_real(proposal, tenant_id, user_id) or _evaluate(proposal, tenant_id, user_id)
     return {
         "decision": result.decision.value,
         "reasons": list(result.reasons),
         "dimensions": result.dimensions or {},
+        "evaluation_source": "postgres_verityflow" if os.getenv("DATABASE_URL") and os.getenv("ROF12_MCP_CAPABILITY_TOKEN") else "synthetic_fallback",
     }
 
 

@@ -33,7 +33,7 @@ def evaluate(ctx, request, capability, provenance, risk_report, verity_result, s
         reasons.append("INVALID_IDENTITY")
 
     tool_name = getattr(request, "tool_name", "refund_service")
-    action_ok = tool_name == "refund_service"
+    action_ok = tool_name in {"refund_service", "deployment_approval"}
     dimensions["action"] = action_ok
     if not action_ok:
         reasons.append("UNKNOWN_TOOL")
