@@ -6,7 +6,7 @@ Principio: una propuesta del agente NO es un permiso. Solo un permit firmado, li
 from __future__ import annotations
 
 import datetime as dt
-import hashlib, hmac, json, secrets, time
+import hashlib, hmac, secrets, time
 from dataclasses import dataclass, field
 
 from .audit import Audit, canon

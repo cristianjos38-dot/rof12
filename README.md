@@ -1,5 +1,7 @@
 # ROF12 — Runtime de Ejecución Segura y Freno Universal para Agentes de IA
 
+[![CI](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml) [![coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-blue)](#verificación-rápida-para-jueces) [![license](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-1.0.0-blue)](pyproject.toml)
+
 ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autoridad limitada, verificable y revocable. El reembolso es el primer caso de prueba demostrable; el núcleo de Capacidades atómicas, Taint Tracking, VerityFlow, Policy Engine Default-Deny, Security Gate y Audit Chain se aplica de la misma forma a DevOps, Finanzas, Legal y APIs operativas.
 
 ## Estado para evaluación

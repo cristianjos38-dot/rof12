@@ -3,7 +3,7 @@ import json, os, shutil
 
 from .audit import Audit
 from .agent import MetaAgent
-from .gate import ALLOW, DENY, REQUIRE_APPROVAL, Gate, Proposal
+from .gate import ALLOW, DENY, Gate
 from .inspector import inspect_pdf
 from .meta_client import MetaClient
 from .tools import PermitError, Store, ToolRuntime

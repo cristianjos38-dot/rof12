@@ -2,8 +2,6 @@ name: ROF12 staging validation
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 concurrency:
   group: rof12-staging

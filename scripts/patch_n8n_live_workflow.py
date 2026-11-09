@@ -183,7 +183,7 @@ def main() -> int:
         activation = requests.post(f"{url}/activate", headers=headers, auth=basic, timeout=20)
         if activation.status_code >= 400:
             print(f"[WARN] Activación explícita HTTP {activation.status_code}; PUT incluyó active=true")
-    print(f"[PASS] Flujo actualizado en n8n live")
+    print("[PASS] Flujo actualizado en n8n live")
     return 0
 
 
