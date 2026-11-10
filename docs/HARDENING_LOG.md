@@ -83,6 +83,15 @@ No contiene secretos; `azd up` queda pendiente de una suscripción Azure
 autorizada. `docs/A2A_DESIGN.md` documenta el límite de autoridad para futuras
 integraciones A2A.
 
+## Fase 5 — presentación y distribución
+
+Se añadieron diagrama de arquitectura y encaje Agent 365/Foundry al README,
+`CHANGELOG.md`, `CONTRIBUTING.md`, política de divulgación en `SECURITY.md`,
+`docs/POLICIES.md` y `contrib/README.md` para marcar voz/n8n como adaptadores
+experimentales. El paquete queda preparado para PyPI con versión `1.0.0`, pero
+no se publicó ni se creó un release remoto: esta rama no está fusionada y no se
+dispone de un token PyPI autorizado.
+
 ## Fase 3 — endurecimiento de producción
 
 Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
