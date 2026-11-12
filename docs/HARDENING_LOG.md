@@ -156,3 +156,10 @@ El PR #1 se fusionó en `master` con merge commit `1ecc94c`. Se publicó el tag
 anotado `v1.0.0` y el release de GitHub incluye el SBOM regenerado localmente
 como `sbom.json`. El archivo continúa fuera del índice y protegido por
 `.gitignore`.
+
+## Cierre — distribución PyPI
+
+El paquete `rof12==1.0.0` se construyó correctamente como sdist y wheel. No se
+detectó token ni credencial de PyPI en el entorno, por lo que no se intentó
+publicar; `docs/RELEASING.md` conserva los comandos exactos para una sesión
+autorizada.
