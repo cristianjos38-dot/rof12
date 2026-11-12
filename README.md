@@ -122,6 +122,8 @@ curl -fsS -X POST http://127.0.0.1:8000/v1/evaluate \
 
 The local token contains only `sub`, `iss`, `aud`, `exp`, and `iat`. The API requires PostgreSQL membership resolution before a protected request is accepted.
 
+For an actual refund, `POST /v1/refunds` requires authentication, a server-resolved tenant, and `X-Capability-Token`; the executor role revalidates VerityFlow, consumes the capability atomically, and writes the refund, outbox event, and audit event in one transaction. Hold resolution repeats that revalidation. MCP exposes `execute_refund` with execution authority only on the server; `request_permit` remains evaluation-only.
+
 ## MCP bridge
 
 `rof12/mcp_server.py` exposes two stdio MCP tools:

@@ -30,9 +30,13 @@ jobs:
       matrix:
         python-version: ['3.11', '3.12']
     env:
+      APP_ENV: ci
       MODEL_MODE: mock
+      JWT_SECRET: ci_dev_only_jwt_secret_change_me
       DATABASE_URL: postgresql+psycopg://rof12_app:rof12_app_dev_only@localhost:5432/rof12
       DATABASE_OWNER_URL: postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5432/rof12
+      DATABASE_EXECUTOR_URL: postgresql+psycopg://rof12_executor:rof12_executor_dev_only@localhost:5432/rof12
+      ROF12_EXECUTOR_DB_URL: postgresql+psycopg://rof12_executor:rof12_executor_dev_only@localhost:5432/rof12
       ROF12_LIVE_DB_URL: postgresql://rof12_app:rof12_app_dev_only@localhost:5432/rof12
     steps:
       - uses: actions/checkout@v4
@@ -42,8 +46,8 @@ jobs:
           cache: pip
       - name: Install project
         run: |
-          python -m pip install --upgrade "setuptools>=84.1.0"
-          python -m pip install -e '.[dev]'
+          python -m pip install --upgrade "setuptools>=84.1.0" uv
+          uv sync --locked --extra dev
       - name: Bootstrap database roles
         env:
           PGPASSWORD: postgres_dev_only
@@ -56,15 +60,28 @@ jobs:
           GRANT CREATE ON DATABASE rof12 TO rof12_owner;
           SQL
       - name: Apply migrations and seed fixtures
-        run: alembic upgrade head && python scripts/seed.py
+        run: .venv/bin/alembic upgrade head && .venv/bin/python scripts/seed.py
+      - name: Reconcile runtime role grants
+        env:
+          PGPASSWORD: postgres_dev_only
+        run: |
+          psql -h localhost -U postgres -d rof12 -v ON_ERROR_STOP=1 <<'SQL'
+          GRANT USAGE ON SCHEMA rof12 TO rof12_app, rof12_executor, rof12_audit;
+          GRANT SELECT ON rof12.system_state TO rof12_app, rof12_audit, rof12_executor;
+          GRANT UPDATE ON rof12.system_state TO rof12_executor;
+          GRANT SELECT ON rof12.refunds TO rof12_executor;
+          GRANT SELECT, INSERT ON rof12.audit_events TO rof12_executor;
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA rof12 TO rof12_app, rof12_executor, rof12_audit;
+          SQL
+          psql -h localhost -U postgres -d rof12 -c "SELECT table_name, grantee, privilege_type FROM information_schema.role_table_grants WHERE grantee IN ('rof12_app', 'rof12_executor') AND table_name IN ('system_state', 'refunds', 'audit_events') ORDER BY table_name, grantee, privilege_type;"
       - name: Build hardened image
         run: docker build --tag rof12-ci .
       - name: Verify
-        run: make PYTHON=python check
+        run: make PYTHON=.venv/bin/python check
       - name: Replay protected corpus against PostgreSQL
         run: |
-          python -m demo.replay --database-url "$DATABASE_OWNER_URL" --json > /tmp/rof12-replay.json
-          python - <<'PY'
+          .venv/bin/python -m demo.replay --database-url "$DATABASE_OWNER_URL" --json > /tmp/rof12-replay.json
+          .venv/bin/python - <<'PY'
           import json
           from pathlib import Path
           rows = json.loads(Path('/tmp/rof12-replay.json').read_text())['results']
@@ -77,8 +94,8 @@ jobs:
           PY
       - name: Verify adversarial attack corpus
         run: |
-          python scripts/run_attack_round.py
-          python - <<'PY'
+          .venv/bin/python scripts/run_attack_round.py
+          .venv/bin/python - <<'PY'
           import json
           from collections import Counter
           rows = json.load(open('artifacts/attack_round_results.json'))

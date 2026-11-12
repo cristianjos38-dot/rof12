@@ -8,6 +8,9 @@ from starlette.responses import Response
 from app.api.dependencies import AuthContext, get_auth_context
 from app.api.routes.holds import hold_manager
 from app.api.state import api_state
+from app.db.connection import create_app_engine
+from app.security.kill_switch import KillSwitch
+from sqlalchemy.exc import SQLAlchemyError
 
 _UI_ROOT = Path(__file__).resolve().parent
 _templates = Jinja2Templates(
@@ -40,13 +43,21 @@ def _tenant_artifacts(context: AuthContext) -> list[dict]:
         ]
 
 
+def _kill_switch_active() -> bool:
+    try:
+        with create_app_engine().begin() as connection:
+            return KillSwitch().read(connection).active
+    except SQLAlchemyError:
+        return False
+
+
 def _render(template: str, request: Request, context: AuthContext, **extra) -> Response:
     data = {
         "request": request,
         "auth": context,
         "holds": _tenant_holds(context),
         "artifacts": _tenant_artifacts(context),
-        "kill_switch_active": api_state.kill_switch_active,
+        "kill_switch_active": _kill_switch_active(),
         **extra,
     }
     response = _templates.TemplateResponse(request=request, name=template, context=data)

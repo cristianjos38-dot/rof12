@@ -151,6 +151,9 @@ holds = Table(
     Column("status", Text, nullable=False),
     Column("expires_at", TIMESTAMP(timezone=True), nullable=False),
     Column("resolved_by", Text),
+    Column("justification", Text, nullable=False, server_default=text("''")),
+    Column("proposal", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
+    Column("capability_token_hash", Text),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="holds_tenant_fk"),
 )
@@ -163,6 +166,7 @@ gate_decisions = Table(
     Column("decision", Text, nullable=False),
     Column("reasons", JSONB, nullable=False, server_default=text("'[]'::jsonb")),
     Column("permit_id", Text),
+    Column("proposal_hash", Text),
     Column("created_at", TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")),
     ForeignKeyConstraint(["tenant_id"], ["rof12.tenants.tenant_id"], name="gate_decisions_tenant_fk"),
 )

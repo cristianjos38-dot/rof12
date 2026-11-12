@@ -1,9 +1,10 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-import sqlalchemy
+import pytest
 
-from rof12.mcp_server import evaluate_proposal, request_permit
+import rof12.mcp_server as mcp_server
+from rof12.mcp_server import MCPError, evaluate_proposal, request_permit
 from app.security.capability_manager import hash_capability
 
 
@@ -17,13 +18,16 @@ class _Result:
     def first(self):
         return self.row
 
+    def scalar(self):
+        return False
+
 
 class _Connection:
     def __init__(self, capability, order):
         self.capability = capability
         self.order = order
 
-    def execute(self, statement, _params):
+    def execute(self, statement, _params=None):
         sql = str(statement)
         if "capabilities" in sql:
             return _Result(self.capability)
@@ -87,7 +91,7 @@ def _configure_db(monkeypatch, amount: str):
     monkeypatch.setenv("ROF12_MCP_CAPABILITY_TOKEN", token)
     monkeypatch.setenv("ROF12_MCP_TENANT_ID", "tenant_001")
     monkeypatch.setenv("ROF12_MCP_USER_ID", "user_001")
-    monkeypatch.setattr(sqlalchemy, "create_engine", lambda *_args, **_kwargs: _Engine(connection))
+    monkeypatch.setattr(mcp_server, "create_engine", lambda *_args, **_kwargs: _Engine(connection))
     return _proposal(amount)
 
 
@@ -115,3 +119,23 @@ def test_mcp_real_verityflow_rejects_without_permit(monkeypatch):
     assert "CONSTRAINT_FAILED" in evaluation["reasons"]
     assert permit["decision"] == "DENY"
     assert "permit_id" not in permit
+
+
+def test_mcp_without_database_configuration_rejects(monkeypatch):
+    for name in ("DATABASE_URL", "ROF12_MCP_CAPABILITY_TOKEN", "ROF12_MCP_TENANT_ID", "ROF12_MCP_USER_ID"):
+        monkeypatch.delenv(name, raising=False)
+    with pytest.raises(MCPError, match="MCP_NOT_CONFIGURED"):
+        evaluate_proposal(_proposal("10.00"))
+
+
+def test_mcp_malformed_proposal_rejects_before_database_use(monkeypatch):
+    _configure_db(monkeypatch, "10.00")
+    with pytest.raises(MCPError, match="MALFORMED_PROPOSAL"):
+        evaluate_proposal({"tool_name": "refund_service", "args": {}})
+
+
+def test_mcp_unreachable_database_rejects_closed(monkeypatch):
+    _configure_db(monkeypatch, "10.00")
+    monkeypatch.setattr(mcp_server, "create_engine", lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("offline")))
+    with pytest.raises(MCPError, match="MCP_DATABASE_ERROR"):
+        evaluate_proposal(_proposal("10.00"))

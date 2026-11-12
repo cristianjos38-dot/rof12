@@ -101,10 +101,9 @@ disco para adjuntarlo a releases. `make sbom` lo regenera localmente y
 ## Cierre — MCP y VerityFlow
 
 El adaptador MCP ahora comparte el resolvedor server-side entre
-`evaluate_proposal` y `request_permit`: cuando hay conexión y capacidad
-configuradas, ambos ejecutan VerityFlow y el SecurityGate reales; el fallback
-sintético sigue siendo explícito. Se añadieron pruebas deterministas para una
-propuesta permitida con permiso opaco y otra rechazada sin permiso.
+`evaluate_proposal`, `request_permit` y `execute_refund`: cuando hay conexión y
+capacidad configuradas, ejecutan VerityFlow y el SecurityGate reales; sin
+configuración devuelven `MCP_NOT_CONFIGURED` y no existe fallback sintético.
 
 ## Cierre — identificación de Supabase
 
@@ -144,11 +143,10 @@ El corpus v2 suma 25 casos documentados: 7 v1 y 18 v2. El corpus legítimo
 contiene 20 fixtures sintéticos y registra 0/20 falsos positivos (0% en este
 laboratorio). Se añadieron propiedades Hypothesis para `Decimal`, expiración de
 capacidades y manipulación de la cadena; el adaptador DevOps reutiliza el mismo
-Gate con 1 caso permitido y 4 ataques denegados. La ruta MCP ahora intenta
-resolver capacidad/pedido y ejecutar `VerityFlow` bajo RLS cuando recibe
-`DATABASE_URL` y `ROF12_MCP_CAPABILITY_TOKEN`; sin ellos reporta
-`synthetic_fallback` y no se presenta como verificación real. Validación local:
-96 passed, 2 skipped, cobertura 75.04%.
+Gate con 1 caso permitido y 4 ataques denegados. La ruta MCP resuelve
+capacidad/pedido y ejecuta `VerityFlow` bajo RLS cuando recibe la configuración
+completa; sin ella reporta `MCP_NOT_CONFIGURED` y no se presenta como
+verificación real.
 
 ## Cierre — master y release 1.0.0
 

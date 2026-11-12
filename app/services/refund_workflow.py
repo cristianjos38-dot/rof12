@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal
 from threading import RLock
+from uuid import uuid4
 
 from app.domain.contracts import GateResult, ServerContext, ToolRequest
 from app.domain.enums import Decision, DenyReason, QuarantineReason, RefundStatus
@@ -87,14 +88,16 @@ class RefundWorkflow:
         connection.execute(text("""
             INSERT INTO rof12.gate_decisions (decision_id, tenant_id, operation_id, decision, reasons)
             VALUES (:id, :tenant_id, :operation_id, :decision, CAST(:reasons AS jsonb))
-        """), {"id": request.operation_id, "tenant_id": context.tenant_id, "operation_id": request.operation_id,
+        """), {"id": f"decision:{request.operation_id}:{uuid4()}", "tenant_id": context.tenant_id, "operation_id": request.operation_id,
                "decision": policy.decision.value, "reasons": __import__("json").dumps(policy.reasons)})
         if policy.decision.value != "ALLOW":
             return policy
         # 7: one-time atomic capability consumption; 8: tool writes in this same transaction.
         permit = gate.mint_if_allowed(policy)
         if not CapabilityManager(connection).consume(capability_token, request, context, now):
-            raise PermissionError("capability was not consumable")
+            from app.security.policy_engine import GateDecision, PolicyResult
+
+            return PolicyResult(GateDecision.DENY, ("CAPABILITY_NOT_CONSUMABLE",), policy.dimensions)
         execute_refund_transaction(connection, request, context, permit)
         # 9: outbox and audit are part of this transaction; commit belongs to the caller.
         connection.execute(text("""

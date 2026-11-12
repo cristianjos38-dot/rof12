@@ -19,3 +19,14 @@ def create_app_engine():
         connect_args["prepare_threshold"] = int(DATABASE_PREPARE_THRESHOLD)
     return create_engine(database_url(), pool_pre_ping=True, connect_args=connect_args)
 
+
+def create_executor_engine():
+    """Use the dedicated executor role for irreversible security mutations."""
+    url = os.getenv("DATABASE_EXECUTOR_URL") or database_url()
+    connect_args = {}
+    if DATABASE_PREPARE_THRESHOLD.lower() == "none":
+        connect_args["prepare_threshold"] = None
+    elif DATABASE_PREPARE_THRESHOLD.isdigit():
+        connect_args["prepare_threshold"] = int(DATABASE_PREPARE_THRESHOLD)
+    return create_engine(url, pool_pre_ping=True, connect_args=connect_args)
+

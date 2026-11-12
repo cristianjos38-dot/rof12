@@ -26,6 +26,7 @@ class VerityFlowResult:
     allowed: bool
     reasons: tuple
     checks: dict
+    approval_required: bool = False
 
 
 VALID_STATES = frozenset({"PAID", "FULFILLED", "REFUNDABLE"})
@@ -64,7 +65,12 @@ def evaluate_snapshot(order: dict | None, request, ctx, capability: CapabilityRe
     if not _valid_amount(amount):
         reasons.append(VerityReason.INVALID_AMOUNT)
     unique_reasons = tuple(dict.fromkeys(reasons))
-    return VerityFlowResult(not unique_reasons, unique_reasons, checks)
+    approval_required = (
+        not unique_reasons
+        and isinstance(amount, Decimal)
+        and Decimal("180.00") < amount <= Decimal("200.00")
+    )
+    return VerityFlowResult(not unique_reasons, unique_reasons, checks, approval_required)
 
 
 def evaluate(connection, request, ctx, capability: CapabilityRecord | None, now: datetime) -> VerityFlowResult:

@@ -9,8 +9,6 @@ class ApiState:
         self.artifacts = {}
         self.holds = {}
         self.audit = {}
-        self.kill_switch_active = False
-        self.kill_reason = ""
 
     def task(self, tenant_id, task_id):
         return self.tasks.get((tenant_id, task_id))
