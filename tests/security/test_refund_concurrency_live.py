@@ -52,7 +52,13 @@ def test_same_capability_and_operation_have_one_live_winner():
             decision = getattr(result, "decision", None)
             return "EXECUTED" if decision is not None and decision.value == "ALLOW" else decision.value
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        outcomes = list(pool.map(attempt, (1, 2)))
-    assert outcomes.count("EXECUTED") == 1
-    assert sum(item in {"DENY", "EXECUTED"} for item in outcomes) == 2
+    try:
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(attempt, (1, 2)))
+        assert outcomes.count("EXECUTED") == 1
+        assert sum(item in {"DENY", "EXECUTED"} for item in outcomes) == 2
+    finally:
+        with owner_engine.begin() as connection:
+            connection.execute(text("DELETE FROM rof12.refunds WHERE operation_id = :operation_id"), {"operation_id": operation_id})
+            connection.execute(text("DELETE FROM rof12.capabilities WHERE capability_id = 'live-race-capability'"))
+            connection.execute(text("DELETE FROM rof12.orders WHERE order_id = 'live-race-order'"))

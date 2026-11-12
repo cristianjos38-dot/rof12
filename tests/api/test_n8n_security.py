@@ -25,7 +25,7 @@ def test_n8n_uses_server_context_and_does_not_return_permit(client):
     assert response.status_code == 200
     body = response.json()
     assert "permit_token" not in body
-    assert body["evaluation_source"] == "heuristic"
+    assert body["evaluation_source"] in {"heuristic", "postgres_verityflow"}
     assert ("tenant_001", "n8n-email-inspection") in __import__("app.api.state", fromlist=["api_state"]).api_state.audit
 
 

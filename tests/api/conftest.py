@@ -71,7 +71,9 @@ def security_client(monkeypatch):
 
 
 @pytest.fixture
-def approver_client():
+def approver_client(monkeypatch):
+    from app.api.routes import holds as holds_routes
+    monkeypatch.setattr(holds_routes, "_db_enabled", lambda: False)
     context = AuthContext("user_approver", "tenant_001", "approver", "ACTIVE", "user_approver")
     app.dependency_overrides[get_auth_context] = lambda: context
     with TestClient(app, client=(f"approver-{uuid4().hex}", 50002)) as test_client:
