@@ -1,75 +1,92 @@
-# ROF12 — Runtime de Ejecución Segura y Freno Universal para Agentes de IA
+# ROF12 — Decision-Level Authorization Runtime for AI Agents
 
-[![CI](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml) [![coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-blue)](#verificación-rápida-para-jueces) [![license](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-1.0.0-blue)](pyproject.toml)
+[![CI](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/badge/coverage-77%25-blue)](docs/BENCHMARKS.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.0-blue)](pyproject.toml)
 
-ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autoridad limitada, verificable y revocable. El reembolso es el primer caso de prueba demostrable; el núcleo de Capacidades atómicas, Taint Tracking, VerityFlow, Policy Engine Default-Deny, Security Gate y Audit Chain se aplica de la misma forma a DevOps, Finanzas, Legal y APIs operativas.
+ROF12 is a decision-level authorization runtime for AI agents: the agent proposes, the runtime verifies, and no consequential action executes without a permit the agent cannot mint.
+
+## What it is
+
+- A server-authoritative decision boundary between an agent proposal and a side-effecting tool.
+- A deterministic verification and policy path for identity, tenant ownership, provenance, amount, capability, state, and idempotency.
+- A PostgreSQL-backed runtime with row-level tenant isolation, atomic capabilities, human approval holds, an emergency kill switch, and a chained audit log.
+
+## What it is not
+
+- It is not an agent framework or an autonomous executor.
+- It is not a replacement for Entra, Purview, Defender, or a provider identity system.
+- It is not a production-proven product; the repository contains local and CI evidence only.
+- It does not let a model make the final decision. Model output is a signal; deterministic policy is the decider, and failure falls back to deny or quarantine.
+
+## How it works
 
 ```text
-Agent 365 / Foundry / MCP
-          |
-          v
-  ROF12 API + AuthContext
-          |
-  Provenance -> VerityFlow -> Policy Engine -> SecurityGate
-          |             |          |              |
-          +-------------+----------+--------------+--> Audit Chain / RLS PostgreSQL
-                                                        |
-                                                        +--> Permit -> herramienta autorizada
+Agent or MCP client
+        |
+        v
+ServerContext + AuthContext
+        |
+Provenance -> VerityFlow -> Policy Engine -> SecurityGate
+      |              |              |              |
+      +--------------+--------------+--------------+
+                                      |
+                         internal Permit -> tool
+                                      |
+                         Audit Chain + PostgreSQL RLS
 ```
 
-## Estado para evaluación
+`app/provenance.py` marks external values as tainted and permits deterministic reconciliation only. `app/verification/verityflow.py` performs the six commercial checks without calling a model. `app/security/policy_engine.py` combines identity, action, resource, authority, constraints, taint, kill-switch, and approval dimensions using default-deny logic. `app/security/security_gate.py` is the final boundary and is the only component that can mint the internal permit. The standalone core is in `rof12/core.py`.
 
-| Fase | Estado | Evidencia principal |
-|---|---|---|
-| F0 | Completada | Scaffold, configuración, healthcheck y pruebas locales |
-| F1 | Completada | Contratos Pydantic estrictos y `MODEL_MODE=mock` |
-| F2 | Completada | Gate de reembolsos, límites, aprobación, cuarentena e idempotencia |
-| F3 | Completada | PostgreSQL, Alembic, aislamiento RLS, FKs compuestas y roles G5 |
-| F4 | Completada | JWT cerrado, `AuthContext`, membresías activas y provenance tainted |
-| F5 | Completada | Ingesta documental aislada, SHA-256, storage seguro y RLS |
-| F6 | Completada | Inspección PDF, OCR intercambiable, análisis visual y risk analyzer neutral |
-| F7 | Completada | Capabilities hash-only, consumo atómico, expiración y revocación |
-| F8 | Completada | VerityFlow V1–V6 determinista y financiero con `Decimal` |
-| F9 | Completada | Policy Engine puro, default-deny y taint-aware |
-| F10 | Completada | Holds, Kill Switch y cadena de auditoría criptográfica |
-| F11 | Completada | Security Gate, permisos internos y ejecución transaccional |
-| F12 | Completada | Router Meta multi-modo, probe Meta AI live, orquestador read-only, prompts aislados y Budget Guard |
-| F13 | Completada | API FastAPI v1, observabilidad, rate limiting y administración de seguridad |
-| F14 | Completada | Panel server-rendered seguro con Jinja2, HTMX local y aislamiento por tenant |
-| F15 | Completada | Laboratorio adversarial, cobertura T-01–T-11 y quality gates reproducibles |
-| F16 | Completada | Replay Baseline vs Protected, arranque Docker limpio y entrega reproducible |
-| F17 | Completada | Staging con Supabase, roles/RLS, Transaction Pooler, JWT del proveedor y perímetro Cloudflare documentado |
-| F18 | Completada | Arnés técnico, corpus adversarial, aislamiento RLS en PostgreSQL, probe Meta AI live, terminal de voz y certificación de persistencia/auditoría |
+## Invariants
 
-La percepción documental se ejecuta in-process con políticas de contención y aislamiento en Docker definidas para despliegue en daemon; el worker aislado sigue pendiente de una validación operacional del daemon en este entorno.
-Resultado del laboratorio adversarial: 7 de 7 vectores neutralizados (2 `QUARANTINE`, 5 `DENY`) y 0 falsos positivos.
+- Default-deny is the initial and failure state: `app/security/policy_engine.py`.
+- Monetary values use bounded `Decimal` in Python and `NUMERIC(12,2)` in PostgreSQL; domain code does not use floats: `app/domain/contracts.py`, `app/persistence/tables.py`.
+- JWT validation accepts a closed claim set. Tenant, role, membership, and capability scope come from server-side stores: `app/api/authentication.py`, `app/api/dependencies.py`.
+- Tenant-aware tables use PostgreSQL RLS with `app.tenant_id` and composite tenant foreign keys: `migrations/`, `docs/SUPABASE_STAGING.md`.
+- Permits are non-serializable and can only be minted by `SecurityGate` after `ALLOW`: `app/security/security_gate.py`.
+- Duplicate submission does not execute twice: capability consumption and refund operation handling are conditional and idempotent: `app/security/capability_manager.py`, `app/services/refund_workflow.py`.
+- `app/tools/refund_service.py` is imported only by `app/services/refund_workflow.py`.
 
-## Requisitos previos
+## Threat model
 
-- Docker Desktop con el daemon iniciado.
-- Python 3.11+ (Docker usa Python 3.12).
-- PostgreSQL 16 mediante Docker Compose.
+| Vector | Control |
+|---|---|
+| T-01: agent impersonates a user or tenant | Server-owned identity; agent contracts contain no identity authority. |
+| T-02: cross-tenant access | Ownership checks and PostgreSQL RLS default to no rows. |
+| T-03: amount or precision manipulation | Positive, bounded `Decimal` values and `NUMERIC(12,2)`. |
+| T-04: extra fields or prompt injection | Strict schemas, tainted provenance, and default-deny policy evaluation. |
+| T-05: replay or double refund | Atomic capability consumption and operation idempotency. |
+| T-06: contaminated data | Unreconciled values terminate in `QUARANTINE`. |
+| T-07: tool bypass | Internal permits and a single workflow import boundary. |
+| T-08: hidden document manipulation | PDF inspection, OCR comparison, and neutral risk signals. |
+| T-09: capability escalation | Hash-only tokens, expiry, tenant binding, user binding, and amount limits. |
+| T-10: emergency bypass | Kill-switch state is checked before authority and execution. |
+| T-11: audit tampering | Canonical event hashes, previous-hash links, and transaction locks. |
 
-Para una instalación de terceros, empieza desde la plantilla pública:
+See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for the detailed assets and controls.
+
+## Evaluation
+
+The evaluation corpus is synthetic and deterministic:
+
+- The v2 adversarial corpus contains 25 cases: 7 original vectors and 18 additional vectors in [attacks/v2_manifest.json](attacks/v2_manifest.json).
+- The legitimate corpus contains 20 clean-document records. The measured lab result is `0/20` false positives for the deterministic fixture classifier; it is not a production accuracy claim.
+- Hypothesis tests cover Decimal precision, capability expiry, and audit-chain tampering.
+- A second domain, DevOps deployment approval, reuses the same Gate and has one allowed case plus four denied cases.
+- The latest local pure Gate benchmark measured `0.0052 ms` average, `0.0051 ms` p50, and `0.0053 ms` p95 over 1,000 in-memory calls. The protected document replay artifact measured `3.639 ms` average over seven persisted protected rows. These are different methods and are not interchangeable.
+
+Reproduce the corpus and property results with:
 
 ```bash
-cp .env.example .env
-python3.11 -m pip install -e '.[dev]'
+MODEL_MODE=mock python3.11 -m pytest tests/test_evaluation_v2.py tests/test_properties.py tests/test_devops_domain.py -q
+python3.11 scripts/run_attack_round.py
+python3.11 scripts/bench_gate.py
 ```
 
-Provisiona PostgreSQL local con `docker compose up -d --build`, aplica
-`alembic upgrade head` y ejecuta `make seed`. Nunca copies credenciales reales
-al repositorio; usa un gestor de secretos o variables de entorno.
+The benchmark method and provenance are recorded in [docs/BENCHMARKS.md](docs/BENCHMARKS.md); evaluation methodology is in [docs/EVALUATION.md](docs/EVALUATION.md).
 
-## Instalación y demo local
+## Quickstart: standalone, no Docker
 
-### Instalación directa desde Git
-
-```bash
-python3.11 -m pip install git+https://github.com/cristianjos38-dot/rof12.git
-```
-
-Uso como librería standalone (sin PostgreSQL ni APIs externas):
+The standalone example uses only synthetic in-memory state and requires no database key or model API:
 
 ```bash
 python3.11 examples/quickstart.py
@@ -77,8 +94,9 @@ python3.11 examples/quickstart.py
 # $1850.00: DENY
 ```
 
-El paquete `rof12-demo/` es un arnés independiente de demostración; sus PDFs
-se regeneran localmente y no se publican como artefactos volátiles.
+## Full stack: PostgreSQL 16 and FastAPI
+
+Run the documented local stack:
 
 ```bash
 cp .env.example .env
@@ -88,138 +106,72 @@ python3.11 -m pip install -e '.[dev]'
 docker compose up -d --build
 docker compose exec api alembic upgrade head
 make seed
-curl -fsS localhost:8000/health/ready
+curl -fsS http://127.0.0.1:8000/health/ready
 ```
 
-La API queda disponible en `http://localhost:8000`; `/health/ready` solo responde correctamente cuando PostgreSQL está disponible. El endpoint protegido de demostración es `GET /tasks/context` y requiere Bearer JWT más `X-Tenant-ID`.
-
-El servicio HTTP expone la evaluación protegida mediante `POST /v1/evaluate`
-(también disponible como `POST /v1/tasks`; el payload declara únicamente la
-tarea y sus datos; identidad, tenant y rol se resuelven en servidor). El arranque sin `DATABASE_URL` conserva el fallback de
-configuración a PostgreSQL local `rof12_app` para desarrollo; las pruebas usan
-`MODEL_MODE=mock` y no requieren APIs externas.
-
-Para ejecutar un reembolso real, `POST /v1/refunds` requiere autenticación,
-tenant resuelto por el servidor y `X-Capability-Token`; el rol executor
-revalida VerityFlow, consume la capability atómicamente y escribe reembolso,
-outbox y auditoría en una sola transacción. La resolución de holds repite esa
-revalidación. MCP expone `execute_refund` con autoridad de ejecución únicamente
-en el servidor; `request_permit` sigue siendo evaluation-only.
-
-### Acceso al dashboard local
-
-El dashboard no tiene credenciales universales `admin/admin`: la autenticación
-siempre valida JWT y membresía activa en PostgreSQL. Para laboratorio, genera
-un token temporal sin claims de tenant ni roles y abre:
+The API has a local development fallback when `DATABASE_URL` is absent. The protected evaluation endpoint is `POST /v1/evaluate`; its body contains the task type and payload, while the authenticated context is resolved by the server. With a seeded local database, a laboratory request can be sent with a generated token:
 
 ```bash
 export DEMO_JWT="$(python3.11 scripts/dev_token.py user_001)"
-curl -H "Authorization: Bearer $DEMO_JWT" -H "X-Tenant-ID: tenant_001" \
-  http://127.0.0.1:8000/ui/
+curl -fsS -X POST http://127.0.0.1:8000/v1/evaluate \
+  -H "Authorization: Bearer $DEMO_JWT" \
+  -H "X-Tenant-ID: tenant_001" \
+  -H "Content-Type: application/json" \
+  -d '{"task_type":"refund_review","payload":{"order_id":"order_1042"}}'
 ```
 
-La URL visual es `http://127.0.0.1:8000/ui/`; requiere que PostgreSQL esté
-sembrado con `user_001`/`tenant_001`. El panel muestra holds, artefactos,
-estado de seguridad y eventos disponibles para ese tenant.
+The local token contains only `sub`, `iss`, `aud`, `exp`, and `iat`. The API requires PostgreSQL membership resolution before a protected request is accepted.
 
-Para ejecutar el replay comparativo con los mismos siete fixtures y registrar la tabla en PostgreSQL:
+For an actual refund, `POST /v1/refunds` requires authentication, a server-resolved tenant, and `X-Capability-Token`; the executor role revalidates VerityFlow, consumes the capability atomically, and writes the refund, outbox event, and audit event in one transaction. Hold resolution repeats that revalidation. MCP exposes `execute_refund` with execution authority only on the server; `request_permit` remains evaluation-only.
+
+## MCP bridge
+
+`rof12/mcp_server.py` exposes two stdio MCP tools:
+
+- `evaluate_proposal` evaluates a proposal and returns a decision without executing a tool.
+- `request_permit` repeats the evaluation and returns an opaque permit only for `ALLOW`; the permit is not execution authority.
+
+Tenant and user values are process-owned server context, never agent-supplied tool arguments. When `DATABASE_URL` and `ROF12_MCP_CAPABILITY_TOKEN` are configured, the bridge loads capability and order state under PostgreSQL RLS, runs real VerityFlow, and then invokes the SecurityGate. Without both values it reports `synthetic_fallback` and remains non-authoritative.
+
+Run the local smoke test and inspect the client example:
 
 ```bash
-DATABASE_OWNER_URL=postgresql+psycopg://rof12_owner:rof12_owner_dev_only@localhost:5433/rof12 \
-  python3.11 -m demo.replay
+MODEL_MODE=mock python3.11 scripts/mcp_smoke.py
+sed -n '1,120p' examples/mcp_client.py
 ```
 
-Para preparar una grabación con seed idempotente, healthcheck, UI autenticada y
-salida legible Baseline vs Protected:
+See [docs/MCP.md](docs/MCP.md) and [docs/IDENTITY.md](docs/IDENTITY.md).
 
-```bash
-export DATABASE_OWNER_URL='<owner pooler URL>'
-export DATABASE_URL='<app transaction-pooler URL>'
-export DEMO_JWT="$(python3.11 scripts/dev_token.py user_001)"
-make prep-demo
-```
+## Optional model adapters
 
-Use `python3.11 demo/run_demonstration.py --json` cuando se necesite salida
-machine-readable; el modo predeterminado muestra `[BASELINE: VULNERABLE]` y
-`[PROTECTED: BLOCKED]` para la grabación.
-
-El modo Baseline usa únicamente un almacén ficticio en memoria y no importa `app`, no lee secretos ROF12 ni accede a rutas de almacenamiento protegidas. El modo Protected usa la percepción local de ROF12. La salida se consulta después de insertar y leer `rof12.demo_results`; no contiene resultados codificados manualmente.
-
-Para generar un token de laboratorio:
-
-```bash
-python3.11 scripts/dev_token.py user_001
-```
-
-Los claims del token son únicamente `sub`, `iss`, `aud`, `exp` e `iat`. El tenant y el rol se resuelven contra PostgreSQL.
-
-## Adaptadores Meta opcionales
-
-ROF12 incluye adaptadores opcionales para `muse-spark-1.3` (señales de riesgo),
-`sam-3.1` (cajas y máscaras de evidencia) y `muse-wonder-1.0` (planes y
-propuestas). Se configuran únicamente por entorno:
+The optional adapters expose `muse-spark-1.3` for risk signals, `sam-3.1` for evidence boxes and masks, and `muse-wonder-1.0` for plans and proposals. Model output is never an execution decision. Missing credentials, non-live mode, network failure, or malformed responses use deterministic local fallback behavior.
 
 ```bash
 export MODEL_MODE=live
-export META_API_KEY='<inyectar-desde-un-secret-manager>'
+export META_API_KEY='<injected-by-secret-manager>'
 export META_API_BASE_URL='https://api.meta.ai/v1'
 export META_API_RESPONSES_URL='https://api.meta.ai/v1/chat/completions'
 ```
 
-Si falta `META_API_KEY`, el modo no es `live` o la llamada falla, el cliente
-usa el fallback determinista local. No se imprimen ni persisten claves. Las
-salidas de Wonder nunca ejecutan herramientas directamente: se convierten en
-`Proposal` y pasan por `SecurityGate.evaluate()`. Las señales de Spark y la
-segmentación de SAM se registran como `meta_trace` en `demo_results` y como
-evidencia de auditoría cuando el documento queda en cuarentena.
+The macOS voice terminal is an experimental adapter and is not required by the core runtime; see [contrib/README.md](contrib/README.md).
 
-La terminal de voz funciona en modo teclado por defecto. El micrófono solo se
-habilita explícitamente con `python3.11 demo/run_voice_terminal.py --listen` o
-`--voice`; `edge-tts`, `SpeechRecognition` y PyAudio son dependencias
-opcionales según el sistema operativo.
+## Deployment
 
-## Verificación rápida para jueces
+The Docker image uses a multi-stage build, a pinned base-image digest, and non-root UID 10001. Operations guidance, migrations, backup, restore, and SBOM generation are in [docs/OPERATIONS.md](docs/OPERATIONS.md).
 
-```bash
-make check
-MODEL_MODE=mock python3.11 -m pytest
-python3.11 -m alembic upgrade head --sql > /tmp/rof12-schema.sql
-git status --short
-```
+An Azure Container Apps scaffold is available in [azure.yaml](azure.yaml) and [azure/main.bicep](azure/main.bicep). The documented command is `azd up`, but it was not tested because this environment has no Azure CLI or authenticated subscription. See [docs/DEPLOY_AZURE.md](docs/DEPLOY_AZURE.md).
 
-`make check` compila la aplicación y ejecuta toda la suite sin APIs externas. La prueba de integración PostgreSQL requiere que Docker esté activo; `make seed` es idempotente y carga `tenant_001/user_001/order_1042` y el tenant aislado `tenant_002/user_002/order_9999`.
+Supabase staging configuration and its current verification limits are documented in [docs/SUPABASE_STAGING.md](docs/SUPABASE_STAGING.md). The live audit-event count is not certified; the document records the historical count of four events and the connection failure observed during the final audit.
 
-## Seguridad y publicación
+## Security
 
-- Los contratos de entrada usan `extra="forbid"` y no aceptan identidad declarada por el agente.
-- El dinero usa `Decimal` en Python y `NUMERIC(12,2)` en PostgreSQL.
-- Las tablas tenant-aware tienen RLS con `app.tenant_id` y claves foráneas compuestas.
-- `.env`, `secrets/`, claves privadas y caches están excluidos por `.gitignore`.
-- Las credenciales presentes en Compose/init son valores de laboratorio locales (`dev_only`/`*_dev`), nunca credenciales de producción.
-- `MODEL_MODE=mock` evita dependencias externas durante las pruebas.
+- `.env`, staging files, secrets, private keys, caches, generated media, and the local SBOM are ignored by Git.
+- No credentials, connection strings with passwords, or provider tokens belong in the repository.
+- The SBOM is regenerated with `make sbom` and attached to the [v1.0.0 GitHub release](https://github.com/cristianjos38-dot/rof12/releases/tag/v1.0.0); it is not tracked in `master`.
+- Report suspected vulnerabilities privately using the process in [SECURITY.md](SECURITY.md).
 
-## Agent 365 / Foundry
+## Contributing and release
 
-ROF12 se ubica como freno y punto de verificación entre agentes de Agent 365 o
-Foundry y herramientas operativas. MCP, HTTP y futuros adaptadores A2A son
-transportes; no cambian la autoridad server-side, el default-deny ni la
-revalidación del Gate.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing the repository. The release history is in [CHANGELOG.md](CHANGELOG.md). The package metadata is `rof12==1.0.0`, but PyPI publication is pending; installation is currently from Git or from a locally built distribution. See [docs/RELEASING.md](docs/RELEASING.md) for the authorized publication commands.
 
-## Declaración de alcance
-
-Todo el alcance documentado en esta entrega se construyó durante el hackathon de noviembre de 2026 y llega hasta la certificación final de Fase 18. El reembolso es el primer caso demostrable; el núcleo de seguridad es agnóstico a la industria.
-
-## Staging con Supabase y Cloudflare
-
-La configuración de staging usa `rof12_app` para la API, `rof12_owner` únicamente para migraciones/seed y `DATABASE_PREPARE_THRESHOLD=none` cuando se utiliza Transaction Pooler. JWT se valida con `JWT_ISSUER`, `JWT_AUDIENCE`, `JWT_ALGORITHM=RS256` y `JWT_PUBLIC_KEY`, siempre inyectados como secretos. Consulte [docs/SUPABASE_STAGING.md](docs/SUPABASE_STAGING.md).
-
-Con las variables configuradas de forma segura, la validación reproducible es:
-
-```bash
-alembic upgrade head
-DATABASE_OWNER_URL="$DATABASE_OWNER_URL" make seed
-make smoke-staging
-```
-
-El workflow `.github/workflows/deploy-staging.yml` ejecuta checks, migraciones, seed y smoke test usando GitHub Environment `staging`. Cloudflare debe configurarse con TLS Full (strict), WAF, rate limiting y Access para `/ui/*` y `/v1/security/*`; ningún token de Cloudflare se almacena en el repositorio.
-
+The full historical phase inventory is preserved in [docs/HISTORY.md](docs/HISTORY.md). The independent demo harness is documented in [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).
