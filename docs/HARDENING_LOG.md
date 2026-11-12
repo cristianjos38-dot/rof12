@@ -119,6 +119,14 @@ cuatro eventos (`ALLOW=2`, `DENY=1`, `QUARANTINE=1`).
 El PR #1 fue renombrado a `Hardening Fases 0–5: RLS, replay, MCP, evaluación
 adversarial, producción y distribución` y continúa abierto contra `master`.
 
+## Cierre — CI del PR
+
+La corrida `43257673019` terminó verde en Python 3.11 y 3.12:
+`100 passed, 1 skipped`. El único skip es la prueba de resiliencia que requiere
+un Docker de PostgreSQL adicional; la prueba RLS viva se ejecutó mediante
+`ROF12_LIVE_DB_URL`. Verify, Replay (`1 ALLOW + 6 QUARANTINE`) y corpus
+adversarial (`5 DENY + 2 QUARANTINE`) terminaron correctamente.
+
 ## Fase 3 — endurecimiento de producción
 
 Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
