@@ -95,7 +95,9 @@ class RefundWorkflow:
         # 7: one-time atomic capability consumption; 8: tool writes in this same transaction.
         permit = gate.mint_if_allowed(policy)
         if not CapabilityManager(connection).consume(capability_token, request, context, now):
-            raise PermissionError("capability was not consumable")
+            from app.security.policy_engine import GateDecision, PolicyResult
+
+            return PolicyResult(GateDecision.DENY, ("CAPABILITY_NOT_CONSUMABLE",), policy.dimensions)
         execute_refund_transaction(connection, request, context, permit)
         # 9: outbox and audit are part of this transaction; commit belongs to the caller.
         connection.execute(text("""

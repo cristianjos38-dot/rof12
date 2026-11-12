@@ -26,7 +26,18 @@ def test_n8n_uses_server_context_and_does_not_return_permit(client):
     body = response.json()
     assert "permit_token" not in body
     assert body["evaluation_source"] in {"heuristic", "postgres_verityflow"}
-    assert ("tenant_001", "n8n-email-inspection") in __import__("app.api.state", fromlist=["api_state"]).api_state.audit
+    if body["evaluation_source"] == "postgres_verityflow":
+        import os
+
+        from sqlalchemy import create_engine, text
+
+        with create_engine(os.environ["DATABASE_OWNER_URL"]).begin() as connection:
+            persisted = connection.execute(
+                text("SELECT 1 FROM rof12.audit_events WHERE tenant_id = 'tenant_001' AND event_type = 'N8N_EMAIL_INSPECTION' LIMIT 1")
+            ).first()
+        assert persisted is not None
+    else:
+        assert ("tenant_001", "n8n-email-inspection") in __import__("app.api.state", fromlist=["api_state"]).api_state.audit
 
 
 def test_n8n_body_cannot_supply_tenant(client):
