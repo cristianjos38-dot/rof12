@@ -40,7 +40,7 @@ jobs:
       ROF12_LIVE_DB_URL: postgresql://rof12_app:rof12_app_dev_only@localhost:5432/rof12
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
