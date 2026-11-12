@@ -39,7 +39,7 @@ jobs:
       ROF12_EXECUTOR_DB_URL: postgresql+psycopg://rof12_executor:rof12_executor_dev_only@localhost:5432/rof12
       ROF12_LIVE_DB_URL: postgresql://rof12_app:rof12_app_dev_only@localhost:5432/rof12
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
