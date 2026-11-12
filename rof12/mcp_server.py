@@ -86,11 +86,18 @@ def _evaluate_real(proposal: dict[str, Any], tenant_id: str, user_id: str):
         return None
 
 
+def _resolve_evaluation(proposal: dict[str, Any], tenant_id: str, user_id: str):
+    """Prefer the database-backed evaluation whenever its inputs are configured."""
+    return _evaluate_real(proposal, tenant_id, user_id) or _evaluate(
+        proposal, tenant_id, user_id
+    )
+
+
 @mcp.tool()
 def evaluate_proposal(proposal: dict[str, Any]) -> dict[str, Any]:
     """Evaluate a proposal without executing any tool or issuing authority."""
     tenant_id, user_id = os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", "")
-    result = _evaluate_real(proposal, tenant_id, user_id) or _evaluate(proposal, tenant_id, user_id)
+    result = _resolve_evaluation(proposal, tenant_id, user_id)
     return {
         "decision": result.decision.value,
         "reasons": list(result.reasons),
@@ -102,7 +109,9 @@ def evaluate_proposal(proposal: dict[str, Any]) -> dict[str, Any]:
 @mcp.tool()
 def request_permit(proposal: dict[str, Any]) -> dict[str, Any]:
     """Mint an opaque permit only when the existing Gate returns ALLOW."""
-    result = _evaluate(proposal, os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", ""))
+    result = _resolve_evaluation(
+        proposal, os.getenv("ROF12_MCP_TENANT_ID", ""), os.getenv("ROF12_MCP_USER_ID", "")
+    )
     if result.decision.value != "ALLOW":
         return {"decision": result.decision.value, "reasons": list(result.reasons)}
     permit = SecurityGate().mint_if_allowed(result)

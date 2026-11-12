@@ -98,6 +98,14 @@ dispone de un token PyPI autorizado.
 disco para adjuntarlo a releases. `make sbom` lo regenera localmente y
 `git check-ignore` confirmó la regla; no se reescribió el historial anterior.
 
+## Cierre — MCP y VerityFlow
+
+El adaptador MCP ahora comparte el resolvedor server-side entre
+`evaluate_proposal` y `request_permit`: cuando hay conexión y capacidad
+configuradas, ambos ejecutan VerityFlow y el SecurityGate reales; el fallback
+sintético sigue siendo explícito. Se añadieron pruebas deterministas para una
+propuesta permitida con permiso opaco y otra rechazada sin permiso.
+
 ## Fase 3 — endurecimiento de producción
 
 Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
