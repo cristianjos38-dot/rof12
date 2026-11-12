@@ -61,6 +61,19 @@ jobs:
           SQL
       - name: Apply migrations and seed fixtures
         run: .venv/bin/alembic upgrade head && .venv/bin/python scripts/seed.py
+      - name: Reconcile runtime role grants
+        env:
+          PGPASSWORD: postgres_dev_only
+        run: |
+          psql -h localhost -U postgres -d rof12 -v ON_ERROR_STOP=1 <<'SQL'
+          GRANT USAGE ON SCHEMA rof12 TO rof12_app, rof12_executor, rof12_audit;
+          GRANT SELECT ON rof12.system_state TO rof12_app, rof12_audit, rof12_executor;
+          GRANT UPDATE ON rof12.system_state TO rof12_executor;
+          GRANT SELECT ON rof12.refunds TO rof12_executor;
+          GRANT INSERT ON rof12.audit_events TO rof12_executor;
+          GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA rof12 TO rof12_app, rof12_executor, rof12_audit;
+          SQL
+          psql -h localhost -U postgres -d rof12 -c "SELECT table_name, grantee, privilege_type FROM information_schema.role_table_grants WHERE grantee IN ('rof12_app', 'rof12_executor') AND table_name IN ('system_state', 'refunds', 'audit_events') ORDER BY table_name, grantee, privilege_type;"
       - name: Build hardened image
         run: docker build --tag rof12-ci .
       - name: Verify

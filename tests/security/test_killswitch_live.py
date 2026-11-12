@@ -47,4 +47,14 @@ def test_kill_switch_api_changes_live_gate_state():
             assert client.post("/v1/security/recovery", headers=headers).status_code == 200
             assert client.get("/v1/security/status", headers=headers).json()["kill_switch_active"] is False
     finally:
+        # Leave the shared CI database in the safe state even if an assertion
+        # fails before the public recovery endpoint is reached.
+        try:
+            from sqlalchemy import create_engine
+
+            engine = create_engine(os.environ["ROF12_EXECUTOR_DB_URL"])
+            with engine.begin() as connection:
+                KillSwitch().deactivate(connection, context)
+        except Exception:
+            pass
         app.dependency_overrides.clear()
