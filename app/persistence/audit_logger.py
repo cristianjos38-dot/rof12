@@ -23,7 +23,9 @@ class AuditEvent:
 class AuditLogger:
     def append(self, connection, event_id: str, tenant_id: str, event_type: str, actor_user_id: str, payload: dict) -> AuditEvent:
         connection.execute(text("SELECT pg_advisory_xact_lock(hashtext('rof12.audit_chain'))"))
-        row = connection.execute(text("SELECT event_hash FROM rof12.audit_events ORDER BY chain_sequence DESC LIMIT 1 FOR UPDATE")).first()
+        # The transaction-scoped advisory lock serializes chain appends. A
+        # plain SELECT preserves the executor's insert/select-only contract.
+        row = connection.execute(text("SELECT event_hash FROM rof12.audit_events ORDER BY chain_sequence DESC LIMIT 1")).first()
         previous = row[0] if row else "GENESIS"
         event = {"event_id": event_id, "tenant_id": tenant_id, "event_type": event_type, "actor_user_id": actor_user_id, "payload": payload}
         digest = chain_hash(previous, event)

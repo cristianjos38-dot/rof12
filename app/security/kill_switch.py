@@ -21,7 +21,7 @@ class KillSwitch:
     AUTHORIZED_ROLES = frozenset({"admin", "security_admin"})
 
     def read(self, connection) -> SystemState:
-        row = connection.execute(text("SELECT kill_switch_active, reason, updated_at FROM rof12.system_state WHERE state_id = true FOR SHARE")).mappings().first()
+        row = connection.execute(text("SELECT kill_switch_active, reason, updated_at FROM rof12.system_state WHERE state_id = true")).mappings().first()
         if not row:
             return SystemState(False)
         return SystemState(bool(row["kill_switch_active"]), row.get("reason", ""), row.get("updated_at"))
