@@ -8,7 +8,7 @@ include = ["app*", "rof12*"]
 
 [project]
 name = "rof12"
-version = "1.0.0"
+version = "1.1.0"
 description = "ROF12 default-deny autonomous refund workflow"
 requires-python = ">=3.11"
 dependencies = [
