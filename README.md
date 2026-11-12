@@ -1,6 +1,6 @@
 # ROF12 — Decision-Level Authorization Runtime for AI Agents
 
-[![CI](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/badge/coverage-77%25-blue)](docs/BENCHMARKS.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) [![Version](https://img.shields.io/badge/version-1.0.0-blue)](pyproject.toml)
+[![CI](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/badge/coverage-77%25-blue)](docs/BENCHMARKS.md) [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) [![Version](https://img.shields.io/badge/version-1.1.0-blue)](pyproject.toml)
 
 ROF12 is a decision-level authorization runtime for AI agents: the agent proposes, the runtime verifies, and no consequential action executes without a permit the agent cannot mint.
 
@@ -167,11 +167,11 @@ Supabase staging configuration and its current verification limits are documente
 
 - `.env`, staging files, secrets, private keys, caches, generated media, and the local SBOM are ignored by Git.
 - No credentials, connection strings with passwords, or provider tokens belong in the repository.
-- The SBOM is regenerated with `make sbom` and attached to the [v1.0.0 GitHub release](https://github.com/cristianjos38-dot/rof12/releases/tag/v1.0.0); it is not tracked in `master`.
+- The SBOM is regenerated with `make sbom` and attached to the [v1.1.0 GitHub release](https://github.com/cristianjos38-dot/rof12/releases/tag/v1.1.0); it is not tracked in `master`.
 - Report suspected vulnerabilities privately using the process in [SECURITY.md](SECURITY.md).
 
 ## Contributing and release
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing the repository. The release history is in [CHANGELOG.md](CHANGELOG.md). The package metadata is `rof12==1.0.0`, but PyPI publication is pending; installation is currently from Git or from a locally built distribution. See [docs/RELEASING.md](docs/RELEASING.md) for the authorized publication commands.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing the repository. The release history is in [CHANGELOG.md](CHANGELOG.md). The package metadata is `rof12==1.1.0`, but PyPI publication is pending; installation is currently from Git or from a locally built distribution. See [docs/RELEASING.md](docs/RELEASING.md) for the authorized publication commands.
 
 The full historical phase inventory is preserved in [docs/HISTORY.md](docs/HISTORY.md). The independent demo harness is documented in [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md).

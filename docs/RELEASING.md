@@ -1,7 +1,7 @@
 # Releasing ROF12
 
-The package metadata is version `1.0.0`, matching `CHANGELOG.md` and the
-`v1.0.0` GitHub release.
+The package metadata is version `1.1.0`, matching `CHANGELOG.md` and the
+`v1.1.0` GitHub release.
 
 ## Build and verify
 
