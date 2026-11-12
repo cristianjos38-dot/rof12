@@ -163,3 +163,9 @@ El paquete `rof12==1.0.0` se construyó correctamente como sdist y wheel. No se
 detectó token ni credencial de PyPI en el entorno, por lo que no se intentó
 publicar; `docs/RELEASING.md` conserva los comandos exactos para una sesión
 autorizada.
+
+## Cierre — Azure Developer CLI
+
+`azd` y `az` no están instalados en el entorno actual; no se ejecutó ni se
+simuló `azd up`. El despliegue Azure queda pendiente de instalar las CLI y
+contar con una suscripción autenticada.
