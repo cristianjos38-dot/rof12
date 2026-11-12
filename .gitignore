@@ -19,5 +19,6 @@ rof12-demo/assets/*.pdf
 artifacts/meta_live_trace.json
 artifacts/attack_round_results.json
 artifacts/audit_chain.jsonl
+artifacts/sbom.json
 
 .env.staging

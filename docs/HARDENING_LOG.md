@@ -92,6 +92,12 @@ experimentales. El paquete queda preparado para PyPI con versión `1.0.0`, pero
 no se publicó ni se creó un release remoto: esta rama no está fusionada y no se
 dispone de un token PyPI autorizado.
 
+## Cierre — SBOM de release
+
+`artifacts/sbom.json` se retiró del índice y quedó ignorado, conservándose en
+disco para adjuntarlo a releases. `make sbom` lo regenera localmente y
+`git check-ignore` confirmó la regla; no se reescribió el historial anterior.
+
 ## Fase 3 — endurecimiento de producción
 
 Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
