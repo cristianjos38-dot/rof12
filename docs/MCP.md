@@ -26,3 +26,13 @@ When `DATABASE_URL`, `ROF12_MCP_CAPABILITY_TOKEN`, `ROF12_MCP_TENANT_ID`, and
 order under PostgreSQL RLS and runs `VerityFlow` before the Gate. Without the
 full configuration it returns `MCP_NOT_CONFIGURED`; database failures return
 `MCP_DATABASE_ERROR`. There is no synthetic evaluation fallback.
+
+## Limitations
+
+Structured MCP proposals do not carry a document on which provenance analysis
+can operate. Therefore the structured path uses the documented defaults
+`is_tainted=False` and `risk_level=LOW`; its boundary is the server-verified
+identity, capability, order state, VerityFlow checks, idempotency and kill
+switch. An `order_id` or `amount` copied from a poisoned document is not
+detected by taint tracking on this path; route documents through the ingestion
+and perception pipeline when provenance analysis is required.

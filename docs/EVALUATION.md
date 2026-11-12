@@ -7,6 +7,8 @@ synthetic clean-document records; each is sent through the canonical
 application `SecurityGate` with clean provenance and all VerityFlow dimensions
 true. Its measured false-positive rate is `0/20 = 0%`; this is a single-machine
 laboratory result, not a production accuracy claim or a held-out evaluation.
+The tests require the CI PostgreSQL service and are intentionally skipped on a
+developer machine without `DATABASE_OWNER_URL` and `ROF12_EXECUTOR_DB_URL`.
 
 Reproduce with:
 

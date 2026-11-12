@@ -48,6 +48,15 @@ def execute_refund(
     context: AuthContext = Depends(get_auth_context),
     capability_token: str | None = Header(default=None, alias="X-Capability-Token"),
 ):
+    """Execute a structured refund after database-backed revalidation.
+
+    Structured JSON carries no document provenance, so this path defaults to
+    ``is_tainted=False`` and ``risk_level=LOW``. Its security boundary is the
+    server-resolved identity, capability, order state, limits, idempotency and
+    kill switch. An order ID or amount copied from a poisoned document is not
+    detected by taint tracking on this endpoint; document ingestion must be
+    used when provenance analysis is required.
+    """
     if not capability_token:
         raise HTTPException(401, detail="capability token required")
     request = ToolRequest(
