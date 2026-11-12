@@ -10,7 +10,8 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute("""
-        GRANT SELECT ON rof12.system_state, rof12.refunds TO rof12_executor;
+        GRANT SELECT ON rof12.system_state TO rof12_app, rof12_audit, rof12_executor;
+        GRANT SELECT ON rof12.refunds TO rof12_executor;
         GRANT UPDATE ON rof12.system_state TO rof12_executor;
         GRANT INSERT ON rof12.audit_events TO rof12_executor;
     """)
