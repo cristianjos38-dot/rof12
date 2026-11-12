@@ -149,3 +149,10 @@ resolver capacidad/pedido y ejecutar `VerityFlow` bajo RLS cuando recibe
 `DATABASE_URL` y `ROF12_MCP_CAPABILITY_TOKEN`; sin ellos reporta
 `synthetic_fallback` y no se presenta como verificación real. Validación local:
 96 passed, 2 skipped, cobertura 75.04%.
+
+## Cierre — master y release 1.0.0
+
+El PR #1 se fusionó en `master` con merge commit `1ecc94c`. Se publicó el tag
+anotado `v1.0.0` y el release de GitHub incluye el SBOM regenerado localmente
+como `sbom.json`. El archivo continúa fuera del índice y protegido por
+`.gitignore`.
