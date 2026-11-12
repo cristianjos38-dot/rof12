@@ -44,7 +44,7 @@ def _case_shape(case: dict) -> dict:
 
 
 def seed_case(connection, case: dict, document_text: str = "synthetic clean document") -> dict:
-    """Seed one isolated order, capability and document for a live evaluation."""
+    """Seed one isolated order, capability, and document for a live evaluation."""
     shape = _case_shape(case)
     vector_id = case["id"].lower().replace("-", "_")
     tenant_id = shape["tenant_id"]
@@ -63,7 +63,7 @@ def seed_case(connection, case: dict, document_text: str = "synthetic clean docu
           (capability_id, tenant_id, subject_user_id, token_hash, scope, max_amount, status, expires_at)
         VALUES (:id, 'tenant_001', 'user_001', :token_hash, 'refund', :max_amount, :status, :expires)
         ON CONFLICT (capability_id) DO UPDATE SET status = EXCLUDED.status, expires_at = EXCLUDED.expires_at, max_amount = EXCLUDED.max_amount
-    """), {"id": capability_id, "token_hash": hash_capability(token), "max_amount": shape["max_amount"], "status": "CONSUMED" if shape["invalid_capability"] and not shape["expired"] else "ACTIVE", "expires": expires})
+    """), {"id": capability_id, "token_hash": hash_capability(token), "max_amount": shape["max_amount"], "status": "CONSUMED" if (shape["invalid_capability"] or shape["duplicate"]) and not shape["expired"] else "ACTIVE", "expires": expires})
     provenance_id = f"prov_{vector_id}"
     digest = hashlib.sha256(document_text.encode()).hexdigest()
     connection.execute(text("""

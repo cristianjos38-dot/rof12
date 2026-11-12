@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.dependencies import AuthContext
@@ -14,6 +15,7 @@ kill_switch = KillSwitch()
 def security_status(context: AuthContext = Depends(get_security_context)):
     try:
         with create_app_engine().begin() as connection:
+            connection.execute(text("SELECT set_config('app.tenant_id', :tenant_id, true)"), {"tenant_id": context.tenant_id})
             state = kill_switch.read(connection)
     except SQLAlchemyError as exc:
         raise HTTPException(503, detail="security state unavailable") from exc
@@ -25,6 +27,7 @@ def activate_kill_switch(request: Request, context: AuthContext = Depends(get_se
     reason = f"activated by {context.user_id} from {request.client.host if request.client else 'unknown'}"
     try:
         with create_executor_engine().begin() as connection:
+            connection.execute(text("SELECT set_config('app.tenant_id', :tenant_id, true)"), {"tenant_id": context.tenant_id})
             state = kill_switch.activate(connection, context, reason)
     except (SQLAlchemyError, KillSwitchError) as exc:
         raise HTTPException(503, detail="kill switch could not be activated") from exc
@@ -35,6 +38,7 @@ def activate_kill_switch(request: Request, context: AuthContext = Depends(get_se
 def recover(request: Request, context: AuthContext = Depends(get_security_context)):
     try:
         with create_executor_engine().begin() as connection:
+            connection.execute(text("SELECT set_config('app.tenant_id', :tenant_id, true)"), {"tenant_id": context.tenant_id})
             state = kill_switch.deactivate(connection, context)
     except (SQLAlchemyError, KillSwitchError) as exc:
         raise HTTPException(503, detail="kill switch could not be recovered") from exc
