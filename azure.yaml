@@ -1,0 +1,14 @@
+name: rof12
+metadata:
+  template: rof12@1.0.0
+services:
+  api:
+    project: .
+    language: python
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+infra:
+  provider: bicep
+  path: ./azure/main.bicep

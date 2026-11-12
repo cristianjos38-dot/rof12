@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Basic PDF text/metadata triage; not a complete steganography detector."""
-import argparse, json, sys
+import argparse, json
 from pathlib import Path
 try:
     from pypdf import PdfReader

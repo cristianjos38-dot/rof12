@@ -1,6 +1,21 @@
 # ROF12 — Runtime de Ejecución Segura y Freno Universal para Agentes de IA
 
+[![CI](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml/badge.svg)](https://github.com/cristianjos38-dot/rof12/actions/workflows/ci.yml) [![coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-blue)](#verificación-rápida-para-jueces) [![license](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE) [![version](https://img.shields.io/badge/version-1.0.0-blue)](pyproject.toml)
+
 ROF12 es un runtime agnóstico a la industria para ejecutar agentes con autoridad limitada, verificable y revocable. El reembolso es el primer caso de prueba demostrable; el núcleo de Capacidades atómicas, Taint Tracking, VerityFlow, Policy Engine Default-Deny, Security Gate y Audit Chain se aplica de la misma forma a DevOps, Finanzas, Legal y APIs operativas.
+
+```text
+Agent 365 / Foundry / MCP
+          |
+          v
+  ROF12 API + AuthContext
+          |
+  Provenance -> VerityFlow -> Policy Engine -> SecurityGate
+          |             |          |              |
+          +-------------+----------+--------------+--> Audit Chain / RLS PostgreSQL
+                                                        |
+                                                        +--> Permit -> herramienta autorizada
+```
 
 ## Estado para evaluación
 
@@ -175,6 +190,13 @@ git status --short
 - `.env`, `secrets/`, claves privadas y caches están excluidos por `.gitignore`.
 - Las credenciales presentes en Compose/init son valores de laboratorio locales (`dev_only`/`*_dev`), nunca credenciales de producción.
 - `MODEL_MODE=mock` evita dependencias externas durante las pruebas.
+
+## Agent 365 / Foundry
+
+ROF12 se ubica como freno y punto de verificación entre agentes de Agent 365 o
+Foundry y herramientas operativas. MCP, HTTP y futuros adaptadores A2A son
+transportes; no cambian la autoridad server-side, el default-deny ni la
+revalidación del Gate.
 
 ## Declaración de alcance
 

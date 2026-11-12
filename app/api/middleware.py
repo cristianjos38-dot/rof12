@@ -55,6 +55,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
+class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
+    """Reject oversized bodies before application parsing or document storage."""
+
+    def __init__(self, app, max_bytes: int = 10 * 1024 * 1024):
+        super().__init__(app)
+        self.max_bytes = max_bytes
+
+    async def dispatch(self, request: Request, call_next):
+        length = request.headers.get("content-length")
+        if length and int(length) > self.max_bytes:
+            rid = getattr(request.state, "request_id", str(uuid.uuid4()))
+            return JSONResponse({"code": "REQUEST_TOO_LARGE", "message": "request body exceeds limit", "request_id": rid}, status_code=413, headers={"X-Request-ID": rid})
+        return await call_next(request)
+
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Apply browser hardening consistently, including static UI responses."""
 

@@ -10,7 +10,8 @@ from app.config import (
     JWT_SECRET,
 )
 
-ALLOWED_CLAIMS = frozenset({"sub", "iss", "aud", "exp", "iat"})
+REQUIRED_CLAIMS = frozenset({"sub", "iss", "aud", "exp", "iat"})
+OPTIONAL_CLAIMS = frozenset({"agent_id"})
 
 
 class AuthenticationError(ValueError):
@@ -32,9 +33,11 @@ def decode_access_token(token: str) -> dict:
     except InvalidTokenError as exc:
         raise AuthenticationError("invalid token") from exc
 
-    if set(claims) != ALLOWED_CLAIMS:
+    if not REQUIRED_CLAIMS.issubset(claims) or set(claims) - REQUIRED_CLAIMS - OPTIONAL_CLAIMS:
         raise AuthenticationError("token contains unauthorized claims")
     if not isinstance(claims["sub"], str) or not claims["sub"]:
         raise AuthenticationError("token subject must be a non-empty user id")
+    if "agent_id" in claims and (not isinstance(claims["agent_id"], str) or not claims["agent_id"]):
+        raise AuthenticationError("agent_id must be a non-empty identifier")
     return claims
 

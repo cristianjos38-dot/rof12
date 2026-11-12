@@ -1,6 +1,6 @@
 from types import MappingProxyType
 
-AUTHORIZED_TOOLS = MappingProxyType({"refund_service": "refund_service"})
+AUTHORIZED_TOOLS = MappingProxyType({"refund_service": "refund_service", "deployment_approval": "deployment_approval"})
 
 
 def is_registered(tool_name: str) -> bool:

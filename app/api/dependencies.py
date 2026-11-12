@@ -18,6 +18,7 @@ class AuthContext:
     role: str
     membership_status: str
     token_sub: str
+    agent_id: str | None = None
 
 
 bearer = HTTPBearer(auto_error=False)
@@ -49,7 +50,7 @@ def resolve_auth_context(claims: dict, connection, tenant_selector: Optional[str
     ).mappings().first()
     if row is None:
         raise AuthenticationError("no active membership for requested tenant")
-    return AuthContext(user_id=user_id, tenant_id=row["tenant_id"], role=row["role"], membership_status=row["status"], token_sub=user_id)
+    return AuthContext(user_id=user_id, tenant_id=row["tenant_id"], role=row["role"], membership_status=row["status"], token_sub=user_id, agent_id=claims.get("agent_id"))
 
 
 def get_auth_context(

@@ -1,5 +1,13 @@
 # ROF12 security posture
 
+## Reporting vulnerabilities
+
+Please report suspected vulnerabilities privately to the repository maintainers
+before opening a public issue. Include a minimal reproduction, affected commit,
+impact, and mitigation proposal without attaching secrets or customer data.
+We acknowledge reports within 3 business days, provide an initial triage within
+7 business days, and coordinate a fix/release timeline based on severity.
+
 ## Controls implemented
 
 - Server authority: JWTs accept exactly `sub`, `iss`, `aud`, `exp` and `iat`; `tenant_id` and roles are never token claims.
