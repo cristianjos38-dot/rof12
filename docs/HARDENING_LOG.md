@@ -106,6 +106,14 @@ configuradas, ambos ejecutan VerityFlow y el SecurityGate reales; el fallback
 sintético sigue siendo explícito. Se añadieron pruebas deterministas para una
 propuesta permitida con permiso opaco y otra rechazada sin permiso.
 
+## Cierre — identificación de Supabase
+
+La configuración local permitió identificar el ref público
+`hcuimdowcjwdjtmabkyy`. La consulta actual de `rof12.audit_events` no pudo
+conectar y se registró como pendiente; no se afirmó que las siete decisiones
+del CI vivan en Supabase. La evidencia histórica de staging sigue indicando
+cuatro eventos (`ALLOW=2`, `DENY=1`, `QUARANTINE=1`).
+
 ## Fase 3 — endurecimiento de producción
 
 Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
