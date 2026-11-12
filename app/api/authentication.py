@@ -19,10 +19,18 @@ class AuthenticationError(ValueError):
 
 
 def decode_access_token(token: str) -> dict:
+    if JWT_ALGORITHM.startswith("HS"):
+        key = JWT_SECRET
+    elif JWT_ALGORITHM.startswith(("RS", "ES")):
+        key = JWT_PUBLIC_KEY
+    else:
+        raise AuthenticationError("unsupported JWT algorithm")
+    if not key:
+        raise AuthenticationError("JWT verification key is not configured")
     try:
         claims = jwt.decode(
             token,
-            JWT_PUBLIC_KEY or JWT_SECRET,
+            key,
             algorithms=[JWT_ALGORITHM],
             issuer=JWT_ISSUER,
             audience=JWT_AUDIENCE,

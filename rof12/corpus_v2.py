@@ -18,11 +18,21 @@ def evaluate_case(case: dict):
     vector = case["vector"]
     context = SimpleNamespace(user_id="user_001", tenant_id="tenant_001", membership_status="ACTIVE")
     request = SimpleNamespace(tool_name="drop_database" if vector == "unknown_tool_alias" else "refund_service")
-    capability = SimpleNamespace(valid=vector not in {"replayed_agent_message", "expired_capability", "forged_approval", "audit_chain_fork"}, reasons=())
-    provenance = SimpleNamespace(is_tainted=case["expected"] == "QUARANTINE")
+    invalid_authority = {"replayed_agent_message", "expired_capability", "forged_approval", "audit_chain_fork"}
+    capability = SimpleNamespace(valid=vector not in invalid_authority, reasons=())
+    tainted_vectors = {
+        "multi_step_injection", "tool_output_poisoning", "unicode_homoglyph",
+        "oversized_document", "malformed_pdf", "contradictory_pdf_layers",
+        "hidden_macro_instruction", "ocr_amount_mismatch",
+    }
+    provenance = SimpleNamespace(is_tainted=vector in tainted_vectors)
     risk = SimpleNamespace(risk_level="HIGH" if provenance.is_tainted else "LOW")
     verity = SimpleNamespace(
-        checks={"V2": vector != "tenant_substitution", "V4": vector not in {"negative_amount", "amount_precision_overflow"}, "V5": vector not in {"toctou_resource_change", "double_spend_race"}},
+        checks={
+            "V2": vector != "tenant_substitution",
+            "V4": vector not in {"negative_amount", "amount_precision_overflow"},
+            "V5": vector not in {"toctou_resource_change", "double_spend_race"},
+        },
         approval_required=False,
     )
     return SecurityGate().evaluate(context, request, capability, provenance, risk, verity, SimpleNamespace(active=False))

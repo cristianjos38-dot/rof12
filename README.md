@@ -99,6 +99,13 @@ tarea y sus datos; identidad, tenant y rol se resuelven en servidor). El arranqu
 configuración a PostgreSQL local `rof12_app` para desarrollo; las pruebas usan
 `MODEL_MODE=mock` y no requieren APIs externas.
 
+Para ejecutar un reembolso real, `POST /v1/refunds` requiere autenticación,
+tenant resuelto por el servidor y `X-Capability-Token`; el rol executor
+revalida VerityFlow, consume la capability atómicamente y escribe reembolso,
+outbox y auditoría en una sola transacción. La resolución de holds repite esa
+revalidación. MCP expone `execute_refund` con autoridad de ejecución únicamente
+en el servidor; `request_permit` sigue siendo evaluation-only.
+
 ### Acceso al dashboard local
 
 El dashboard no tiene credenciales universales `admin/admin`: la autenticación

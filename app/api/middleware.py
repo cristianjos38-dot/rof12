@@ -42,7 +42,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.hits = defaultdict(deque)
 
     async def dispatch(self, request: Request, call_next):
-        if request.method in {"POST", "PUT", "PATCH", "DELETE"} or request.url.path.startswith("/v1/security/"):
+        if request.url.path.startswith("/v1/"):
             key = f"{request.client.host if request.client else 'unknown'}:{request.url.path}"
             now = time.monotonic()
             hits = self.hits[key]
@@ -64,9 +64,18 @@ class RequestSizeLimitMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         length = request.headers.get("content-length")
-        if length and int(length) > self.max_bytes:
+        try:
+            declared_length = int(length) if length is not None else None
+        except (TypeError, ValueError):
+            declared_length = self.max_bytes + 1
+        if declared_length is not None and declared_length > self.max_bytes:
             rid = getattr(request.state, "request_id", str(uuid.uuid4()))
             return JSONResponse({"code": "REQUEST_TOO_LARGE", "message": "request body exceeds limit", "request_id": rid}, status_code=413, headers={"X-Request-ID": rid})
+        if length is None and request.method in {"POST", "PUT", "PATCH"}:
+            body = await request.body()
+            if len(body) > self.max_bytes:
+                rid = getattr(request.state, "request_id", str(uuid.uuid4()))
+                return JSONResponse({"code": "REQUEST_TOO_LARGE", "message": "request body exceeds limit", "request_id": rid}, status_code=413, headers={"X-Request-ID": rid})
         return await call_next(request)
 
 

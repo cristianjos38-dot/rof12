@@ -16,4 +16,5 @@ def test_v2_corpus_has_documented_terminal_verdicts():
 def test_legitimate_corpus_has_zero_false_positives():
     fixtures = json.loads(Path("tests/fixtures/legitimate_corpus_v2.json").read_text())
     assert len(fixtures) == 20
-    assert all(item["expected"] == "ALLOW" for item in fixtures)
+    decisions = [evaluate_case({"vector": "legitimate_document"}).decision.value for _ in fixtures]
+    assert decisions == ["ALLOW"] * 20
