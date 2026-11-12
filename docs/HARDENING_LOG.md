@@ -114,6 +114,11 @@ conectar y se registró como pendiente; no se afirmó que las siete decisiones
 del CI vivan en Supabase. La evidencia histórica de staging sigue indicando
 cuatro eventos (`ALLOW=2`, `DENY=1`, `QUARANTINE=1`).
 
+## Cierre — gobernanza del PR
+
+El PR #1 fue renombrado a `Hardening Fases 0–5: RLS, replay, MCP, evaluación
+adversarial, producción y distribución` y continúa abierto contra `master`.
+
 ## Fase 3 — endurecimiento de producción
 
 Se endureció la imagen Docker con build multi-stage, usuario UID/GID 10001 y
